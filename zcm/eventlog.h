@@ -48,7 +48,7 @@ zcm_eventlog_event_t* zcm_eventlog_read_next_event(zcm_eventlog_t* eventlog);
 zcm_eventlog_event_t* zcm_eventlog_read_prev_event(zcm_eventlog_t* eventlog);
 zcm_eventlog_event_t* zcm_eventlog_read_event_at_offset(zcm_eventlog_t* eventlog, zoff_t offset);
 void zcm_eventlog_free_event(zcm_eventlog_event_t* event);
-zbool_t zcm_eventlog_write_event(zcm_eventlog_t* eventlog, const zcm_eventlog_event_t* event);
+zcm_retcode_t zcm_eventlog_write_event(zcm_eventlog_t* eventlog, const zcm_eventlog_event_t* event);
 
 
 #ifdef __cplusplus

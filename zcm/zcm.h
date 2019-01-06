@@ -61,16 +61,12 @@ zcm_t* zcm_create_trans(zcm_trans_t* zt);
 void   zcm_destroy(zcm_t* zcm);
 
 #ifndef ZCM_EMBEDDED
-/* Initialize a zcm object allocated by caller
-   Returns true on success, and false on failure
-   Sets zcm errno on failure */
-zbool_t zcm_init(zcm_t* zcm, const zchar_t* url);
+/* Initialize a zcm object allocated by caller */
+zcm_retcode_t zcm_init(zcm_t* zcm, const zchar_t* url);
 #endif
 
-/* Initialize a zcm instance allocated by caller using a transport provided by caller
-   Returns true on success, and false on failure
-   Sets zcm errno on failure */
-zbool_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt);
+/* Initialize a zcm instance allocated by caller using a transport provided by caller */
+zcm_retcode_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt);
 
 /* Cleanup a zcm object allocated by caller */
 void zcm_cleanup(zcm_t* zcm);
@@ -96,22 +92,22 @@ zcm_sub_t* zcm_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t c
 zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr);
 
 /* Unsubscribe to zcm messages, freeing the subscription object
-   Returns ZCM_EOK on success, -1 on failure
+   Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure */
-zbool_t zcm_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
+zcm_retcode_t zcm_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
 
 /* Unsubscribe to zcm messages, freeing the subscription object
-   Returns ZCM_EOK on success, -1 on failure
+   Returns ZCM_EOK on success, error code on failure
    Can fail to subscribe if zcm is already running
    Sets zcm errno on failure */
-zbool_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
+zcm_retcode_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
 
 /* Publish a zcm message buffer. Note: the message may not be completely
    sent after this call has returned. To block until the messages are transmitted,
    call the zcm_flush() method.
    Returns true on success, and false on failure
    Sets zcm errno on failure */
-zbool_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zuint32_t len);
+zcm_retcode_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zuint32_t len);
 
 /* Block until all published messages have been sent even if the underlying
    transport is nonblocking. Additionally, dispatches all messages that have
@@ -123,7 +119,7 @@ void zcm_flush(zcm_t* zcm);
    you should zcm_pause() first.
    Returns true on success, and false on failure
    Sets zcm errno on failure */
-zbool_t zcm_try_flush(zcm_t* zcm);
+zcm_retcode_t zcm_try_flush(zcm_t* zcm);
 
 #ifndef ZCM_EMBEDDED
 /* Blocking Mode Only: Functions for controlling the message dispatch loop */
@@ -132,12 +128,12 @@ void zcm_start(zcm_t* zcm);
 void zcm_stop(zcm_t* zcm);
 /* Returns true on success, and false on failure
    Sets zcm errno on failure */
-zbool_t zcm_try_stop(zcm_t* zcm);
+zcm_retcode_t zcm_try_stop(zcm_t* zcm);
 void zcm_pause(zcm_t* zcm); /* pauses message dispatch and publishing, not transport */
 void zcm_resume(zcm_t* zcm);
 /* Returns true on success, and false on failure
    Sets zcm errno on failure */
-zbool_t zcm_handle(zcm_t* zcm);
+zcm_retcode_t zcm_handle(zcm_t* zcm);
 /* Determines how many messages can be stored from the transport without being dispatched
    As well as the number of messages that may be stored from the user without being
    transmitted by the transport. Normal operation does not require the user to modify
@@ -149,14 +145,14 @@ zbool_t zcm_handle(zcm_t* zcm);
 void zcm_set_queue_size(zcm_t* zcm, zuint32_t numMsgs);
 /* Returns true on success, and false on failure
    Sets zcm errno on failure */
-zbool_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs);
+zcm_retcode_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs);
 #endif
 
 /* Non-Blocking Mode Only: Functions checking and dispatching messages
    Returns true on success, and false on failure
    Sets zcm errno on failure
    zcm errno will be ZCM_EAGAIN if no messages, error code otherwise */
-zbool_t zcm_handle_nonblock(zcm_t* zcm);
+zcm_retcode_t zcm_handle_nonblock(zcm_t* zcm);
 
 /*
  * Version: M.m.u

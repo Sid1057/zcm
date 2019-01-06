@@ -28,6 +28,10 @@
     X( int64_t,   zint64_t) /* Must be at least 64 bits long */ \
     X(   float, zfloat32_t) /* Must be at least 32 bits long */ \
     X(  double, zfloat64_t) /* Must be at least 64 bits long */ \
+    X(  size_t,    zsize_t) /* Must have a size no less than the datatype returned by sizeof */ \
+    X( ssize_t,   zssize_t) /* Must have a size equal to zsize_t */ \
+    X(     int,     zint_t) \
+    X(  string,  zstring_t) /* Must be a string of zchar_t   */ \
 
 #ifndef ZCM_EMBEDDED
 #define ZCM_BASE_TYPES_NO_EMBEDDED \

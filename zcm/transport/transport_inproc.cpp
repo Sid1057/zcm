@@ -6,7 +6,6 @@
 #include "util/TimeUtil.hpp"
 
 #include <algorithm>
-#include <cstring>
 #include <deque>
 #include <mutex>
 #include <condition_variable>
@@ -54,7 +53,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     zcm_retcode_t sendmsg(zcm_msg_t msg)
     {
-        size_t chanLen = 0;
+        zuint32_t chanLen = 0;
         for (; chanLen < ZCM_CHANNEL_MAXLEN + 1; ++chanLen) {
             if (msg.channel[chanLen] == '\0') break;
         }
@@ -95,8 +94,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
         if (trans_type == ZCM_BLOCKING) {
             lk.lock();
-            bool available = msgCond.wait_for(lk, chrono::milliseconds(timeout),
-                                              [&](){ return !msgs.empty(); });
+            zbool_t available = msgCond.wait_for(lk, chrono::milliseconds(timeout),
+                                                 [&](){ return !msgs.empty(); });
             if (!available) return ZCM_EAGAIN;
         } else {
             if (msgs.empty()) return ZCM_EAGAIN;

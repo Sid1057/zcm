@@ -13,11 +13,11 @@
 
 #define MTU (1<<28)
 
-static i32 utimeInSeconds()
+static zi32 utimeInSeconds()
 {
     struct timeval tv;
     gettimeofday (&tv, NULL);
-    return (i32)tv.tv_sec;
+    return (zi32)tv.tv_sec;
 }
 
 /**
@@ -34,13 +34,13 @@ static i32 utimeInSeconds()
  */
 struct Params
 {
-    string ip;
+    zstring_t ip;
     struct in_addr addr;
-    u16            port;
-    u8             ttl;
-    size_t         recv_buf_size;
+    zu16            port;
+    zu8             ttl;
+    zsize_t         recv_buf_size;
 
-    Params(const string& ip, u16 port, size_t recv_buf_size, u8 ttl)
+    Params(const zstring_t& ip, zu16 port, zsize_t recv_buf_size, zu8 ttl)
     {
         // TODO verify that the IP and PORT are vaild
         this->ip = ip;
@@ -60,48 +60,46 @@ struct UDPM
     UDPMSocket sendfd;
 
     /* size of the kernel UDP receive buffer */
-    size_t kernel_rbuf_sz = 0;
-    size_t kernel_sbuf_sz = 0;
-    bool warned_about_small_kernel_buf = false;
+    zsize_t kernel_rbuf_sz = 0;
+    zsize_t kernel_sbuf_sz = 0;
+    zbool_t warned_about_small_kernel_buf = false;
 
     MessagePool pool {MAX_FRAG_BUF_TOTAL_SIZE, MAX_NUM_FRAG_BUFS};
 
     /* other variables */
-    u32          udp_rx = 0;            // packets received and processed
-    u32          udp_discarded_bad = 0; // packets discarded because they were bad
-                                    // somehow
-    double       udp_low_watermark = 1.0; // least buffer available
-    i32          udp_last_report_secs = 0;
+    zu32          udp_rx = 0;            // packets received and processed
+    zu32          udp_discarded_bad = 0; // packets discarded because they were bad
+                                         // somehow
+    zfloat64_t    udp_low_watermark = 1.0; // least buffer available
+    zi32          udp_last_report_secs = 0;
 
-    u32          msg_seqno = 0; // rolling counter of how many messages transmitted
+    zu32          msg_seqno = 0; // rolling counter of how many messages transmitted
 
     /***** Methods ******/
-    UDPM(const string& ip, u16 port, size_t recv_buf_size, u8 ttl);
-    bool init();
+    UDPM(const zstring_t& ip, zu16 port, zsize_t recv_buf_size, zu8 ttl);
+    zbool_t init();
     ~UDPM();
 
-    int handle();
-
     zcm_retcode_t sendmsg(zcm_msg_t msg);
-    zcm_retcode_t recvmsg(zcm_msg_t *msg, int timeout);
+    zcm_retcode_t recvmsg(zcm_msg_t *msg, zint_t timeout);
 
   private:
     // These returns non-null when a full message has been received
-    Message *recvShort(Packet *pkt, u32 sz);
-    Message *recvFragment(Packet *pkt, u32 sz);
-    Message *readMessage(int timeout);
+    Message *recvShort(Packet *pkt, zu32 sz);
+    Message *recvFragment(Packet *pkt, zu32 sz);
+    Message *readMessage(zint_t timeout);
 
     Message *m = nullptr;
 
-    bool selftest();
+    zbool_t selftest();
     void checkForMessageLoss();
 };
 
-Message *UDPM::recvShort(Packet *pkt, u32 sz)
+Message *UDPM::recvShort(Packet *pkt, zu32 sz)
 {
     MsgHeaderShort *hdr = pkt->asHeaderShort();
 
-    size_t clen = hdr->getChannelLen();
+    zsize_t clen = hdr->getChannelLen();
     if (clen > ZCM_CHANNEL_MAXLEN) {
         ZCM_DEBUG("bad channel name length");
         udp_discarded_bad++;
@@ -121,20 +119,20 @@ Message *UDPM::recvShort(Packet *pkt, u32 sz)
     return msg;
 }
 
-Message *UDPM::recvFragment(Packet *pkt, u32 sz)
+Message *UDPM::recvFragment(Packet *pkt, zu32 sz)
 {
     MsgHeaderLong *hdr = pkt->asHeaderLong();
 
     // any existing fragment buffer for this message source?
     FragBuf *fbuf = pool.lookupFragBuf((struct sockaddr_in*)&pkt->from);
 
-    u32 msg_seqno = hdr->getMsgSeqno();
-    u32 data_size = hdr->getMsgSize();
-    u32 fragment_offset = hdr->getFragmentOffset();
-    u16 fragment_no = hdr->getFragmentNo();
-    u16 fragments_in_msg = hdr->getFragmentsInMsg();
-    u32 frag_size = hdr->getFragmentSize(sz);
-    char *data_start = hdr->getDataPtr();
+    zu32 msg_seqno = hdr->getMsgSeqno();
+    zu32 data_size = hdr->getMsgSize();
+    zu32 fragment_offset = hdr->getFragmentOffset();
+    zu16 fragment_no = hdr->getFragmentNo();
+    zu16 fragments_in_msg = hdr->getFragmentsInMsg();
+    zu32 frag_size = hdr->getFragmentSize(sz);
+    zchar_t *data_start = hdr->getDataPtr();
 
     // discard any stale fragments from previous messages
     if (fbuf && ((fbuf->msg_seqno != msg_seqno) ||
@@ -151,8 +149,8 @@ Message *UDPM::recvFragment(Packet *pkt, u32 sz)
 
     // create a new fragment buffer if necessary
     if (!fbuf && fragment_no == 0) {
-        char *channel = (char*) (hdr + 1);
-        int channel_sz = strlen(channel);
+        zchar_t *channel = (zchar_t*) (hdr + 1);
+        zint_t channel_sz = strlen(channel);
         if (channel_sz > ZCM_CHANNEL_MAXLEN) {
             ZCM_DEBUG("bad channel name length");
             udp_discarded_bad++;
@@ -207,21 +205,21 @@ void UDPM::checkForMessageLoss()
 {
     // ISSUE-101 TODO: add this back
     // TODO warn about message loss somewhere else.
-    // u32 ring_capacity = ringbuf->get_capacity();
-    // u32 ring_used = ringbuf->get_used();
+    // zu32 ring_capacity = ringbuf->get_capacity();
+    // zu32 ring_used = ringbuf->get_used();
 
-    // double buf_avail = ((double)(ring_capacity - ring_used)) / ring_capacity;
+    // zfloat64_t buf_avail = ((zfloat64_t)(ring_capacity - ring_used)) / ring_capacity;
     // if (buf_avail < udp_low_watermark)
     //     udp_low_watermark = buf_avail;
 
-    // i32 tm = utimeInSeconds();
-    // int elapsedsecs = tm - udp_last_report_secs;
+    // <Plug>(multiple-cursors-apply)zi32 tm = utimeInSeconds();
+    // zint_t elapsedsecs = tm - udp_last_report_secs;
     // if (elapsedsecs > 2) {
     //    if (udp_discarded_bad > 0 || udp_low_watermark < 0.5) {
     //        fprintf(stderr,
     //                "%d ZCM loss %4.1f%% : %5d err, "
     //                "buf avail %4.1f%%\n",
-    //                (int) tm,
+    //                (zint_t) tm,
     //                udp_discarded_bad * 100.0 / (udp_rx + udp_discarded_bad),
     //                udp_discarded_bad,
     //                100.0 * udp_low_watermark);
@@ -235,7 +233,7 @@ void UDPM::checkForMessageLoss()
 }
 
 // read continuously until a complete message arrives
-Message *UDPM::readMessage(int timeout)
+Message *UDPM::readMessage(zint_t timeout)
 {
     Packet *pkt = pool.allocPacket(ZCM_MAX_UNFRAGMENTED_PACKET_SIZE);
     UDPM::checkForMessageLoss();
@@ -246,7 +244,7 @@ Message *UDPM::readMessage(int timeout)
         if (!recvfd.waitUntilData(timeout))
             break;
 
-        int sz = recvfd.recvPacket(pkt);
+        zint_t sz = recvfd.recvPacket(pkt);
         if (sz < 0) {
             ZCM_DEBUG("udp_read_packet -- recvmsg");
             udp_discarded_bad++;
@@ -255,13 +253,13 @@ Message *UDPM::readMessage(int timeout)
 
         ZCM_DEBUG("Got packet of size %d", sz);
 
-        if (sz < (int)sizeof(MsgHeaderShort)) {
+        if (sz < (zint_t)sizeof(MsgHeaderShort)) {
             // packet too short to be ZCM
             udp_discarded_bad++;
             continue;
         }
 
-        u32 magic = pkt->asHeaderShort()->getMagic();
+        zu32 magic = pkt->asHeaderShort()->getMagic();
         if (magic == ZCM_MAGIC_SHORT)
             msg = recvShort(pkt, sz);
         else if (magic == ZCM_MAGIC_LONG)
@@ -279,13 +277,13 @@ Message *UDPM::readMessage(int timeout)
 
 zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
 {
-    int channel_size = strlen(msg.channel);
+    zint_t channel_size = strlen(msg.channel);
     if (channel_size > ZCM_CHANNEL_MAXLEN) {
         fprintf(stderr, "ZCM Error: channel name too long [%s]\n", msg.channel);
         return ZCM_EINVALID;
     }
 
-    int payload_size = channel_size + 1 + msg.len;
+    zint_t payload_size = channel_size + 1 + msg.len;
     if (payload_size <= ZCM_SHORT_MESSAGE_MAX_SIZE) {
         // message is short.  send in a single packet
 
@@ -293,12 +291,12 @@ zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
         hdr.setMagic(ZCM_MAGIC_SHORT);
         hdr.setMsgSeqno(msg_seqno);
 
-        ssize_t status = sendfd.sendBuffers(destAddr,
-                              (char*)&hdr, sizeof(hdr),
-                              (char*)msg.channel, channel_size+1,
-                              (char*)msg.buf, msg.len);
+        zssize_t status = sendfd.sendBuffers(destAddr,
+                              (zchar_t*)&hdr, sizeof(hdr),
+                              (zchar_t*)msg.channel, channel_size+1,
+                              (zchar_t*)msg.buf, msg.len);
 
-        int packet_size = sizeof(hdr) + payload_size;
+        zint_t packet_size = sizeof(hdr) + payload_size;
         ZCM_DEBUG("transmitting %u byte [%s] payload (%d byte pkt)",
                   msg.len, msg.channel, packet_size);
         msg_seqno++;
@@ -323,8 +321,8 @@ zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
 
     else {
         // message is large.  fragment into multiple packets
-        int fragment_size = ZCM_FRAGMENT_MAX_PAYLOAD;
-        int nfragments = payload_size / fragment_size +
+        zint_t fragment_size = ZCM_FRAGMENT_MAX_PAYLOAD;
+        zint_t nfragments = payload_size / fragment_size +
             !!(payload_size % fragment_size);
 
         if (nfragments > 65535) {
@@ -339,7 +337,7 @@ zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
         ZCM_DEBUG("transmitting %d byte [%s] payload in %d fragments",
                   payload_size, msg.channel, nfragments);
 
-        u32 fragment_offset = 0;
+        zu32 fragment_offset = 0;
 
         MsgHeaderLong hdr;
         hdr.magic = htonl(ZCM_MAGIC_LONG);
@@ -350,26 +348,26 @@ zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
         hdr.fragments_in_msg = htons(nfragments);
 
         // first fragment is special.  insert channel before data
-        size_t firstfrag_datasize = fragment_size - (channel_size + 1);
+        zsize_t firstfrag_datasize = fragment_size - (channel_size + 1);
         assert(firstfrag_datasize <= msg.len);
 
-        int packet_size = sizeof(hdr) + (channel_size + 1) + firstfrag_datasize;
+        zint_t packet_size = sizeof(hdr) + (channel_size + 1) + firstfrag_datasize;
         fragment_offset += firstfrag_datasize;
 
-        ssize_t status = sendfd.sendBuffers(destAddr,
-                                            (char*)&hdr, sizeof(hdr),
-                                            (char*)msg.channel, channel_size+1,
-                                            (char*)msg.buf, firstfrag_datasize);
+        zssize_t status = sendfd.sendBuffers(destAddr,
+                                             (zchar_t*)&hdr, sizeof(hdr),
+                                             (zchar_t*)msg.channel, channel_size+1,
+                                             (zchar_t*)msg.buf, firstfrag_datasize);
 
         // transmit the rest of the fragments
-        for (u16 frag_no = 1; packet_size == status && frag_no < nfragments; frag_no++) {
+        for (zu16 frag_no = 1; packet_size == status && frag_no < nfragments; frag_no++) {
             hdr.fragment_offset = htonl(fragment_offset);
             hdr.fragment_no = htons(frag_no);
 
-            int fraglen = std::min(fragment_size, (int)msg.len - (int)fragment_offset);
+            zint_t fraglen = std::min(fragment_size, (zint_t)msg.len - (zint_t)fragment_offset);
             status = sendfd.sendBuffers(destAddr,
-                                        (char*)&hdr, sizeof(hdr),
-                                        (char*)(msg.buf + fragment_offset), fraglen);
+                                        (zchar_t*)&hdr, sizeof(hdr),
+                                        (zchar_t*)(msg.buf + fragment_offset), fraglen);
 
             fragment_offset += fraglen;
             packet_size = sizeof(hdr) + fraglen;
@@ -406,13 +404,13 @@ UDPM::~UDPM()
     ZCM_DEBUG("closing zcm context");
 }
 
-UDPM::UDPM(const string& ip, u16 port, size_t recv_buf_size, u8 ttl)
+UDPM::UDPM(const zstring_t& ip, zu16 port, zsize_t recv_buf_size, zu8 ttl)
     : params(ip, port, recv_buf_size, ttl),
       destAddr(ip, port)
 {
 }
 
-bool UDPM::init()
+zbool_t UDPM::init()
 {
     ZCM_DEBUG("Initializing ZCM UDPM context...");
     ZCM_DEBUG("Multicast %s:%d", params.ip.c_str(), params.port);
@@ -436,7 +434,7 @@ bool UDPM::init()
     return true;
 }
 
-bool UDPM::selftest()
+zbool_t UDPM::selftest()
 {
 #ifdef ENABLE_SELFTEST
     ZCM_DEBUG("UDPM conducting self test");
@@ -452,14 +450,14 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 {
     UDPM udpm;
 
-    ZCM_TRANS_CLASSNAME(const string& ip, u16 port, size_t recv_buf_size, u8 ttl)
+    ZCM_TRANS_CLASSNAME(const zstring_t& ip, zu16 port, zsize_t recv_buf_size, zu8 ttl)
         : udpm(ip, port, recv_buf_size, ttl)
     {
         trans_type = ZCM_BLOCKING;
         vtbl = &methods;
     }
 
-    bool init() { return udpm.init(); }
+    zbool_t init() { return udpm.init(); }
 
     /********************** STATICS **********************/
     static zcm_trans_methods_t methods;
@@ -496,9 +494,9 @@ zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
     &ZCM_TRANS_CLASSNAME::_destroy,
 };
 
-static const char *optFind(zcm_url_opts_t *opts, const string& key)
+static const zchar_t *optFind(zcm_url_opts_t *opts, const zstring_t& key)
 {
-    for (size_t i = 0; i < opts->numopts; i++)
+    for (zsize_t i = 0; i < opts->numopts; i++)
         if (key == opts->name[i])
             return opts->value[i];
     return NULL;
@@ -507,7 +505,7 @@ static const char *optFind(zcm_url_opts_t *opts, const string& key)
 static zcm_trans_t *createUdpm(zcm_url_t *url)
 {
     auto *ip = zcm_url_address(url);
-    vector<string> parts = StringUtil::split(ip, ':');
+    vector<zstring_t> parts = StringUtil::split(ip, ':');
     if (parts.size() != 2) {
         ZCM_DEBUG("ERROR: Url format is <ip-address>:<port-num>");
         return nullptr;
@@ -521,7 +519,7 @@ static zcm_trans_t *createUdpm(zcm_url_t *url)
         ZCM_DEBUG("No ttl specified. Using default ttl=0");
         ttl = "0";
     }
-    size_t recv_buf_size = 1024;
+    zsize_t recv_buf_size = 1024;
     auto *trans = new ZCM_TRANS_CLASSNAME(address, atoi(port.c_str()), recv_buf_size, atoi(ttl));
     if (!trans->init()) {
         delete trans;

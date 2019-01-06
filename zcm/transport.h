@@ -183,10 +183,6 @@
 extern "C" {
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-
 #include "zcm/zcm.h"
 
 /* Only define inline for C99 builds or better */

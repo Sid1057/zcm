@@ -38,24 +38,22 @@ using namespace std;
 
 #define US_TO_MS(a) (a)/1e3
 
-using u8  = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
+using zu8  = zuint8_t;
+using zu64 = zuint64_t;
 
 struct Serial
 {
     Serial(){}
     ~Serial() { close(); }
 
-    bool open(const string& port, int baud, bool hwFlowControl);
-    bool isOpen() { return fd > 0; };
+    zbool_t open(const string& port, zint32_t baud, zbool_t hwFlowControl);
+    zbool_t isOpen() { return fd > 0; };
     void close();
 
-    int write(const u8* buf, size_t sz);
-    int read(u8* buf, size_t sz, u64 timeoutMs);
+    zint32_t write(const zu8* buf, zuint32_t sz);
+    zint32_t read(zu8* buf, zuint32_t sz, zu64 timeoutMs);
     // Returns 0 on invalid input baud otherwise returns termios constant baud value
-    static int convertBaud(int baud);
+    static zint32_t convertBaud(zint32_t baud);
 
     Serial(const Serial&) = delete;
     Serial(Serial&&) = delete;
@@ -64,10 +62,10 @@ struct Serial
 
   private:
     string port;
-    int fd = -1;
+    zint32_t fd = -1;
 };
 
-bool Serial::open(const string& port_, int baud, bool hwFlowControl)
+zbool_t Serial::open(const string& port_, zint32_t baud, zbool_t hwFlowControl)
 {
     if (baud == 0) {
         fprintf(stderr, "Serial baud rate not specified in url. "
@@ -84,7 +82,7 @@ bool Serial::open(const string& port_, int baud, bool hwFlowControl)
     }
     this->port = port_;
 
-    int flags = O_RDWR | O_NOCTTY | O_SYNC;
+    zint32_t flags = O_RDWR | O_NOCTTY | O_SYNC;
     fd = ::open(port.c_str(), flags, 0);
     if (fd < 0) {
         ZCM_DEBUG("failed to open serial device (%s): %s", port.c_str(), strerror(errno));
@@ -131,8 +129,8 @@ bool Serial::open(const string& port_, int baud, bool hwFlowControl)
  fail:
     // Close the port if it was opened
     if (fd > 0) {
-        const int saved_errno = errno;
-        int result;
+        const zint32_t saved_errno = errno;
+        zint32_t result;
         do {
             result = ::close(fd);
         } while (result == -1 && errno == EINTR);
@@ -160,10 +158,10 @@ void Serial::close()
     }
 }
 
-int Serial::write(const u8* buf, size_t sz)
+zint32_t Serial::write(const zu8* buf, zuint32_t sz)
 {
     assert(this->isOpen());
-    int ret = ::write(fd, buf, sz);
+    zint32_t ret = ::write(fd, buf, sz);
     if (ret == -1) {
         ZCM_DEBUG("ERR: write failed: %s", strerror(errno));
         return -1;
@@ -171,23 +169,23 @@ int Serial::write(const u8* buf, size_t sz)
     return ret;
 }
 
-int Serial::read(u8* buf, size_t sz, u64 timeoutUs)
+zint32_t Serial::read(zu8* buf, zuint32_t sz, zu64 timeoutUs)
 {
     assert(this->isOpen());
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
 
-    u64 tOut = max((u64)SERIAL_TIMEOUT_US, timeoutUs);
+    zu64 tOut = max((zu64)SERIAL_TIMEOUT_US, timeoutUs);
 
     struct timeval timeout;
     timeout.tv_sec = tOut / 1000000;
     timeout.tv_usec = tOut % 1000000;
-    int status = ::select(fd + 1, &fds, NULL, NULL, &timeout);
+    zint32_t status = ::select(fd + 1, &fds, NULL, NULL, &timeout);
 
     if (status > 0) {
         if (FD_ISSET(fd, &fds)) {
-            int ret = ::read(fd, buf, sz);
+            zint32_t ret = ::read(fd, buf, sz);
             if (ret == -1) {
                 ZCM_DEBUG("ERR: serial read failed: %s", strerror(errno));
             } else if (ret == 0) {
@@ -208,7 +206,7 @@ int Serial::read(u8* buf, size_t sz, u64 timeoutUs)
     }
 }
 
-int Serial::convertBaud(int baud)
+zint32_t Serial::convertBaud(zint32_t baud)
 {
     switch (baud) {
         case 4800:
@@ -234,10 +232,10 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 {
     Serial ser;
 
-    int baud;
-    bool hwFlowControl;
+    zint32_t baud;
+    zbool_t hwFlowControl;
 
-    bool raw;
+    zbool_t raw;
     string rawChan;
     zuint32_t rawSize;
     std::unique_ptr<zuint8_t[]> rawBuf;
@@ -248,7 +246,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     zcm_trans_t* gst;
 
-    uint64_t timeoutLeft;
+    zuint64_t timeoutLeft;
 
     string* findOption(const string& s)
     {
@@ -264,7 +262,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
         // build 'options'
         auto* opts = zcm_url_opts(url);
-        for (size_t i = 0; i < opts->numopts; ++i)
+        for (zuint32_t i = 0; i < opts->numopts; ++i)
             options[opts->name[i]] = opts->value[i];
 
         baud = 0;
@@ -343,7 +341,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         if (gst) zcm_trans_generic_serial_destroy(gst);
     }
 
-    bool good()
+    <Plug>(multiple-cursors-apply)zbool_t good()
     {
         return ser.isOpen();
     }
@@ -351,9 +349,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static zuint32_t get(zuint8_t* data, zuint32_t nData, void* usr)
     {
         ZCM_TRANS_CLASSNAME* me = cast((zcm_trans_t*) usr);
-        uint64_t startUtime = TimeUtil::utime();
-        int ret = me->ser.read(data, nData, me->timeoutLeft);
-        uint64_t diff = TimeUtil::utime() - startUtime;
+        zuint64_t startUtime = TimeUtil::utime();
+        zint32_t ret = me->ser.read(data, nData, me->timeoutLeft);
+        zuint64_t diff = TimeUtil::utime() - startUtime;
         me->timeoutLeft = me->timeoutLeft > diff ? me->timeoutLeft - diff : 0;
         return ret < 0 ? 0 : ret;
     }
@@ -361,7 +359,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static zuint32_t put(const zuint8_t* data, zuint32_t nData, void* usr)
     {
         ZCM_TRANS_CLASSNAME* me = cast((zcm_trans_t*) usr);
-        int ret = me->ser.write(data, nData);
+        zint32_t ret = me->ser.write(data, nData);
         return ret < 0 ? 0 : ret;
     }
 
@@ -392,7 +390,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     zcm_retcode_t recvmsg(zcm_msg_t* msg, zint32_t timeoutMs)
     {
-        timeoutLeft = timeoutMs > 0 ? timeoutMs * 1e3 : numeric_limits<uint64_t>::max();
+        timeoutLeft = timeoutMs > 0 ? timeoutMs * 1e3 : numeric_limits<zuint64_t>::max();
 
         if (raw) {
             zuint32_t sz = get(rawBuf.get(), rawSize, this);
@@ -406,7 +404,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             return ZCM_EOK;
         } else {
             do {
-                uint64_t startUtime = TimeUtil::utime();
+                zuint64_t startUtime = TimeUtil::utime();
 
                 // Note: No need to lock here ONLY because the internals of
                 //       generic serial transport recvmsg only use the recv related
@@ -414,7 +412,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                 zcm_retcode_t ret = zcm_trans_recvmsg(this->gst, msg, timeoutLeft);
                 if (ret == ZCM_EOK) return ret;
 
-                uint64_t diff = TimeUtil::utime() - startUtime;
+                zuint64_t diff = TimeUtil::utime() - startUtime;
                 startUtime = TimeUtil::utime();
                 // Note: timeoutLeft is calculated here because serial_update_rx
                 //       needs it to be set properly so that the blocking read in

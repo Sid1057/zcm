@@ -817,15 +817,15 @@ struct EmitSource : public Emit
         emit(0, "{");
         emit(0, "      zuint32_t max_data_size = %s_encoded_size (p);", tn_);
         emit(0, "      zuint8_t* buf = (zuint8_t*) zcm_malloc (max_data_size);");
-        emit(0, "      if (!buf) return ZCM_EMEMORY;");
+        emit(0, "      if (!buf) return ZCM_EMEMORY(zcm);");
         emit(0, "      zint32_t data_size = %s_encode (buf, 0, max_data_size, p);", tn_);
         emit(0, "      if (data_size < 0) {");
         emit(0, "          zcm_free (buf);");
-        emit(0, "          return ZCM_EMEMORY;");
+        emit(0, "          return ZCM_EMEMORY(zcm);");
         emit(0, "      }");
-        emit(0, "      zbool_t status = zcm_publish (zcm, channel, buf, (zuint32_t)data_size);");
+        emit(0, "      zcm_retcode_t status = zcm_publish (zcm, channel, buf, (zuint32_t)data_size);");
         emit(0, "      zcm_free (buf);");
-        emit(0, "      return status ? ZCM_EOK : zcm_errno(zcm);");
+        emit(0, "      return ZCM_RETURN_CODE(zcm, status);");
         emit(0, "}");
         emit(0, "");
     }
@@ -897,16 +897,16 @@ struct EmitSource : public Emit
         emit(0, "");
         emit(0, "zcm_retcode_t %s_unsubscribe(zcm_t* zcm, %s_subscription_t* hid)", tn_, tn_);
         emit(0, "{");
-        emit(0, "    zbool_t status = zcm_unsubscribe(zcm, hid->z_sub);");
-        emit(0, "    if (!status) {");
+        emit(0, "    zcm_retcode_t status = zcm_unsubscribe(zcm, hid->z_sub);");
+        emit(0, "    if (status != ZCM_EOK) {");
         emit(0, "        #ifndef ZCM_EMBEDDED");
         emit(0, "        fprintf(stderr,");
         emit(0, "           \"couldn't unsubscribe %s_handler %%p!\\n\", hid);", tn_);
         emit(0, "        #endif");
-        emit(0, "        return zcm_errno(zcm);");
+        emit(0, "        return ZCM_RETURN_CODE(zcm, status);");
         emit(0, "    }");
         emit(0, "    zcm_free (hid);");
-        emit(0, "    return ZCM_EOK;");
+        emit(0, "    return ZCM_EOK(zcm);");
         emit(0, "}\n");
     }
 };

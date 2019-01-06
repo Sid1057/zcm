@@ -214,22 +214,22 @@ void zcm_eventlog_free_event(zcm_eventlog_event_t *le)
     zcm_free(le);
 }
 
-zbool_t zcm_eventlog_write_event(zcm_eventlog_t *l, const zcm_eventlog_event_t *le)
+zcm_retcode_t zcm_eventlog_write_event(zcm_eventlog_t *l, const zcm_eventlog_event_t *le)
 {
-    if (0 != fwrite32(l->f, MAGIC)) return zfalse;
+    if (0 != fwrite32(l->f, MAGIC)) return ZCM_EUNKNOWN;
 
-    if (0 != fwrite64(l->f, l->eventcount)) return zfalse;
+    if (0 != fwrite64(l->f, l->eventcount)) return ZCM_EUNKNOWN;
 
-    if (0 != fwrite64(l->f, le->timestamp)) return zfalse;
-    if (0 != fwrite32(l->f, le->channellen)) return zfalse;
-    if (0 != fwrite32(l->f, le->datalen)) return zfalse;
+    if (0 != fwrite64(l->f, le->timestamp)) return ZCM_EUNKNOWN;
+    if (0 != fwrite32(l->f, le->channellen)) return ZCM_EUNKNOWN;
+    if (0 != fwrite32(l->f, le->datalen)) return ZCM_EUNKNOWN;
 
     if (le->channellen != fwrite(le->channel, sizeof(zchar_t), le->channellen, l->f))
-        return zfalse;
+        return ZCM_EUNKNOWN;
     if (le->datalen != fwrite(le->data, sizeof(zuint8_t), le->datalen, l->f))
-        return zfalse;
+        return ZCM_EUNKNOWN;
 
     l->eventcount++;
 
-    return ztrue;
+    return ZCM_EOK;
 }

@@ -69,15 +69,15 @@ typedef int SOCKET;
 #include "zcm/util/debug.h"
 
 // Useful integer typedefs
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+typedef zuint8_t  zu8;
+typedef zuint16_t zu16;
+typedef zuint32_t zu32;
+typedef zuint64_t zu64;
 
-typedef int8_t   i8;
-typedef int16_t  i16;
-typedef int32_t  i32;
-typedef int64_t  i64;
+typedef zint8_t   zi8;
+typedef zint16_t  zi16;
+typedef zint32_t  zi32;
+typedef zint64_t  zi64;
 
 #define zcm_internal_pipe_write write
 #define zcm_internal_pipe_read read

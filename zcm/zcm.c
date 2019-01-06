@@ -24,6 +24,12 @@
 # define ZCM_DEBUG(...)
 #endif
 
+static zcm_retcode_t ZCM_RETURN_CODE(zcm_t* zcm, zcm_retcode_t rc) { zcm->err = rc; return rc; }
+#define X(ENUM, _, _) \
+    static zcm_retcode_t ENUM ## (zcm_t* zcm) { zcm->err = ENUM; return ENUM; }
+ZCM_RETURN_CODES
+#undef X
+
 #ifndef ZCM_EMBEDDED
 enum zcm_return_codes zcm_retcode_name_to_enum(const zchar_t* zcm_retcode_name)
 {
@@ -65,19 +71,18 @@ void zcm_destroy(zcm_t* zcm)
 }
 
 #ifndef ZCM_EMBEDDED
-zbool_t zcm_init(zcm_t* zcm, const zchar_t* url)
+zcm_retcode_t zcm_init(zcm_t* zcm, const zchar_t* url)
 {
-    zcm->err = ZCM_ECONNECT;
     /* If we have no url, try to use the env var */
     if (!url || url[0] == '\0') {
         url = getenv("ZCM_DEFAULT_URL");
         if (!url) {
             fprintf(stderr, "Please specify zcm url when creating zcm or "
                             "set environment variable ZCM_DEFAULT_URL\n");
-            return zfalse;
+            return ZCM_EINVALID(zcm);
         }
     }
-    zbool_t ret = zfalse;
+    zcm_retcode_t ret = ZCM_EINVALID;
     zcm_url_t* u = zcm_url_create(url);
     ZCM_ASSERT(u);
     const zchar_t* protocol = zcm_url_protocol(u);
@@ -95,17 +100,16 @@ zbool_t zcm_init(zcm_t* zcm, const zchar_t* url)
     }
 
     zcm_url_destroy(u);
-    return ret;
+    return ZCM_RETURN_CODE(zcm, ret);
 }
 #endif
 
-zbool_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
+zcm_retcode_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
 {
     if (zt == NULL) {
         zcm->type = ZCM_NONBLOCKING;
         zcm->impl = NULL;
-        zcm->err = ZCM_EINVALID;
-        return zfalse;
+        return ZCM_EINVALID(zcm);
     }
 
 #ifndef ZCM_EMBEDDED
@@ -113,16 +117,14 @@ zbool_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
         zcm->type = ZCM_BLOCKING;
         zcm->impl = zcm_blocking_create(zcm, zt);
         ZCM_ASSERT(zcm->impl);
-        zcm->err = ZCM_EOK;
-        return ztrue;
+        return ZCM_EOK(zcm);
     }
 #endif
     ZCM_ASSERT(zt->trans_type == ZCM_NONBLOCKING);
     zcm->type = ZCM_NONBLOCKING;
     zcm->impl = zcm_nonblocking_create(zcm, zt);
     ZCM_ASSERT(zcm->impl);
-    zcm->err = ZCM_EOK;
-    return ztrue;
+    return ZCM_EOK(zcm);
 }
 
 void zcm_cleanup(zcm_t* zcm)
@@ -158,17 +160,17 @@ const zchar_t* zcm_strerrno(enum zcm_return_codes err)
     return errcode_str[(zuint32_t) err];
 }
 
-zbool_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zuint32_t len)
+zcm_retcode_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zuint32_t len)
 {
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_publish(zcm->impl, channel, data, len);
-        return zcm->err == ZCM_EOK;
+        return zcm->err;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_publish(zcm->impl, channel, data, len);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }
 
 void zcm_flush(zcm_t* zcm)
@@ -181,17 +183,17 @@ void zcm_flush(zcm_t* zcm)
     return zcm_nonblocking_flush(zcm->impl);
 }
 
-zbool_t zcm_try_flush(zcm_t* zcm)
+zcm_retcode_t zcm_try_flush(zcm_t* zcm)
 {
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_try_flush(zcm->impl);
-        return zcm->err == ZCM_EOK;
+        return zcm->err;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm_nonblocking_flush(zcm->impl);
-    return ztrue;
+    return ZCM_EOK(zcm);
 }
 
 zcm_sub_t* zcm_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr)
@@ -214,30 +216,30 @@ zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler
     return zcm_nonblocking_subscribe(zcm->impl, channel, cb, usr);
 }
 
-zbool_t zcm_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
+zcm_retcode_t zcm_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
 {
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_unsubscribe(zcm->impl, sub);
-        return zcm->err == ZCM_EOK;
+        return zcm->err;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_unsubscribe(zcm->impl, sub);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }
 
-zbool_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
+zcm_retcode_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
 {
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_try_unsubscribe(zcm->impl, sub);
-        return zcm->err == ZCM_EOK;
+        return zcm->err;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_unsubscribe(zcm->impl, sub);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }
 
 #ifndef ZCM_EMBEDDED
@@ -257,11 +259,11 @@ void zcm_stop(zcm_t* zcm)
 #endif
 
 #ifndef ZCM_EMBEDDED
-zbool_t zcm_try_stop(zcm_t* zcm)
+zcm_retcode_t zcm_try_stop(zcm_t* zcm)
 {
     ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
     zcm->err = zcm_blocking_try_stop(zcm->impl);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }
 #endif
 
@@ -290,11 +292,11 @@ void zcm_resume(zcm_t* zcm)
 #endif
 
 #ifndef ZCM_EMBEDDED
-zbool_t zcm_handle(zcm_t* zcm)
+zcm_retcode_t zcm_handle(zcm_t* zcm)
 {
     ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
     zcm->err = zcm_blocking_handle(zcm->impl);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }
 #endif
 
@@ -307,17 +309,17 @@ void zcm_set_queue_size(zcm_t* zcm, zuint32_t numMsgs)
 #endif
 
 #ifndef ZCM_EMBEDDED
-zbool_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs)
+zcm_retcode_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs)
 {
     ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
     zcm->err = zcm_blocking_try_set_queue_size(zcm->impl, numMsgs);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }
 #endif
 
-zbool_t zcm_handle_nonblock(zcm_t* zcm)
+zcm_retcode_t zcm_handle_nonblock(zcm_t* zcm)
 {
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_handle(zcm->impl);
-    return zcm->err == ZCM_EOK;
+    return zcm->err;
 }

@@ -181,7 +181,7 @@ struct zcm_blocking
 
     // Flag and condition variables used to pause the sendThread (use sendStateMutex)
     // and hndlThread (use hndlStateMutex)
-    zbool_t               paused {zfalse};
+    zbool_t            paused {zfalse};
     condition_variable sendPauseCond;
     condition_variable hndlPauseCond;
 };

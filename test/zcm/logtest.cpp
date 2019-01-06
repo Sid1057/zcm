@@ -19,7 +19,7 @@ int main(int argc, const char *argv[])
     zcm_eventlog_t *l = zcm_eventlog_create("testlog.log", "w");
     assert(l && "Failed to open log for writing");
     for (size_t i = 0; i < 100; ++i) {
-        assert(zcm_eventlog_write_event(l, &event) && "Unable to write log event to log");
+        assert(ZCM_EOK == zcm_eventlog_write_event(l, &event) && "Unable to write log event to log");
         event.eventnum++;
         event.timestamp++;
     }

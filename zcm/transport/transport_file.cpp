@@ -23,15 +23,15 @@ using namespace std;
 struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 {
     zcm::LogFile *log = nullptr;
-    unordered_map<string, string> options;
+    unordered_map<zstring_t, zstring_t> options;
 
-    string mode = "r";
-    double speed = 1.0;
+    zstring_t mode = "r";
+    float64_t speed = 1.0;
 
     u64 lastMsgUtime = 0;
     u64 lastDispatchUtime = 0;
 
-    string *findOption(const string& s)
+    zstring_t *findOption(const zstring_t& s)
     {
         auto it = options.find(s);
         if (it == options.end()) return nullptr;
@@ -45,10 +45,10 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
         // build 'options'
         auto *opts = zcm_url_opts(url);
-        for (size_t i = 0; i < opts->numopts; i++)
+        for (zuint32_t i = 0; i < opts->numopts; i++)
             options[opts->name[i]] = opts->value[i];
 
-        string* speedStr = findOption("speed");
+        zstring_t* speedStr = findOption("speed");
         if (speedStr) {
             speed = atof(speedStr->c_str());
             if (speed <= 0) {
@@ -57,9 +57,9 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             }
         }
 
-        string* modeStr = findOption("mode");
+        zstring_t* modeStr = findOption("mode");
         if (modeStr) {
-            mode = string(*modeStr);
+            mode = zstring_t(*modeStr);
             if (!(mode == "r" || mode == "w" || mode == "a")) {
                 ZCM_DEBUG("Expected r|w|a as mode argument for zcm file");
                 return;
@@ -68,7 +68,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
         auto filename = zcm_url_address(url);
         ZCM_DEBUG("Opening zcm logfile: \"%s\"", filename);
-        log = new zcm::LogFile(filename, string(mode));
+        log = new zcm::LogFile(filename, zstring_t(mode));
         if (!log->good()) {
             fprintf(stderr, "Unable to open logfile %s\n", filename);
             return;
@@ -102,7 +102,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         zcm::LogEvent le;
         le.timestamp = msg.utime;
         le.datalen = msg.len;
-        le.channel = string(msg.channel);
+        le.channel = zstring_t(msg.channel);
         le.data = msg.buf;
 
         log->writeEvent(&le);

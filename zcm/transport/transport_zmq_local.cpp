@@ -16,7 +16,6 @@
 #include <cstring>
 #include <cassert>
 
-#include <string>
 #include <vector>
 #include <unordered_map>
 #include <mutex>
@@ -28,7 +27,7 @@ using namespace std;
 
 // Define this the class name you want
 #define ZCM_TRANS_CLASSNAME TransportZmqLocal
-#define MTU (UINT32_MAX)
+#define MTU (1<<28)
 #define START_BUF_SIZE (1 << 20)
 #define ZMQ_IO_THREADS 1
 #define IPC_NAME_PREFIX "zcm-channel-zmq-ipc-"
@@ -40,16 +39,16 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     void *ctx;
     Type type;
 
-    string subnet;
+    zstring_t subnet;
 
-    unordered_map<string, void*> pubsocks;
+    unordered_map<zstring_t, void*> pubsocks;
     // socket pair contains the socket + whether it was subscribed to explicitly or not
-    unordered_map<string, pair<void*, bool>> subsocks;
-    bool recvAllChannels = false;
+    unordered_map<zstring_t, pair<void*, zbool_t>> subsocks;
+    zbool_t recvAllChannels = false;
 
-    string recvmsgChannel;
-    size_t recvmsgBufferSize = START_BUF_SIZE; // Start at 1MB but allow it to grow to MTU
-    uint8_t* recvmsgBuffer;
+    zstring_t recvmsgChannel;
+    zsize_t recvmsgBufferSize = START_BUF_SIZE; // Start at 1MB but allow it to grow to MTU
+    zuint8_t* recvmsgBuffer;
 
     // Mutex used to protect 'subsocks' while allowing
     // recvmsgEnable() and recvmsg() to be called
@@ -63,11 +62,11 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
         subnet = zcm_url_address(url);
         // Make directory with all permissions
-        mkdir(string("/tmp/" + subnet).c_str(), S_IRWXO | S_IRWXG | S_IRWXU);
+        mkdir(zstring_t("/tmp/" + subnet).c_str(), S_IRWXO | S_IRWXG | S_IRWXU);
 
         ZCM_DEBUG("IPC Address: %s\n", subnet.c_str());
 
-        recvmsgBuffer = new uint8_t[recvmsgBufferSize];
+        recvmsgBuffer = new zuint8_t[recvmsgBufferSize];
 
         ctx = zmq_init(ZMQ_IO_THREADS);
         assert(ctx != nullptr);
@@ -76,8 +75,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     ~ZCM_TRANS_CLASSNAME()
     {
-        int rc;
-        string address;
+        zint_t rc;
+        zstring_t address;
 
         // Clean up all publish sockets
         for (auto it = pubsocks.begin(); it != pubsocks.end(); ++it) {
@@ -118,7 +117,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         delete[] recvmsgBuffer;
     }
 
-    string getAddress(const string& channel)
+    sztring _tgetAddress(const zstring_t& channel)
     {
         switch (type) {
             case IPC:
@@ -129,15 +128,15 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         assert(0 && "unreachable");
     }
 
-    bool acquirePubLockfile(const string& channel)
+    zbool_t acquirePubLockfile(const zstring_t& channel)
     {
         switch (type) {
             case IPC: {
-                string lockfileName = "ipc:///tmp/" + subnet + "/" + IPC_NAME_PREFIX + channel;
+                zstring_t lockfileName = "ipc:///tmp/" + subnet + "/" + IPC_NAME_PREFIX + channel;
                 return lockfile_trylock(lockfileName.c_str());
             } break;
             case INPROC: {
-                string lockfileName = "inproc://" + subnet + "/" + IPC_NAME_PREFIX + channel;
+                zstring_t lockfileName = "inproc://" + subnet + "/" + IPC_NAME_PREFIX + channel;
                 return lockfile_trylock(lockfileName.c_str());
                 return true;
             } break;
@@ -146,7 +145,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     }
 
     // May return null if it cannot create a new pubsock
-    void *pubsockFindOrCreate(const string& channel)
+    void *pubsockFindOrCreate(const zstring_t& channel)
     {
         auto it = pubsocks.find(channel);
         if (it != pubsocks.end())
@@ -163,8 +162,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             ZCM_DEBUG("failed to create pubsock: %s", zmq_strerror(errno));
             return nullptr;
         }
-        string address = getAddress(channel);
-        int rc = zmq_bind(sock, address.c_str());
+        zstring_t address = getAddress(channel);
+        zint_t rc = zmq_bind(sock, address.c_str());
         if (rc == -1) {
             ZCM_DEBUG("failed to bind pubsock: %s", zmq_strerror(errno));
             return nullptr;
@@ -174,7 +173,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     }
 
     // May return null if it cannot create a new subsock
-    void *subsockFindOrCreate(const string& channel, bool subExplicit)
+    void *subsockFindOrCreate(const zstring_t& channel, zbool_t subExplicit)
     {
         auto it = subsocks.find(channel);
         if (it != subsocks.end()) {
@@ -186,8 +185,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             ZCM_DEBUG("failed to create subsock: %s", zmq_strerror(errno));
             return nullptr;
         }
-        string address = getAddress(channel);
-        int rc;
+        zstring_t address = getAddress(channel);
+        zint_t rc;
         rc = zmq_connect(sock, address.c_str());
         if (rc == -1) {
             ZCM_DEBUG("failed to connect subsock: %s", zmq_strerror(errno));
@@ -204,18 +203,18 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     void ipcScanForNewChannels()
     {
-        const char *prefix = IPC_NAME_PREFIX;
-        size_t prefixLen = strlen(IPC_NAME_PREFIX);
+        const zchar_t *prefix = IPC_NAME_PREFIX;
+        zsize_t prefixLen = strlen(IPC_NAME_PREFIX);
 
         DIR *d;
         dirent *ent;
 
-        if (!(d=opendir(string("/tmp/" + subnet).c_str())))
+        if (!(d=opendir(zstring_t("/tmp/" + subnet).c_str())))
             return;
 
         while ((ent=readdir(d)) != nullptr) {
             if (strncmp(ent->d_name, prefix, prefixLen) == 0) {
-                string channel(ent->d_name + prefixLen);
+                zstring_t channel(ent->d_name + prefixLen);
                 void *sock = subsockFindOrCreate(channel, false);
                 if (sock == nullptr) {
                     ZCM_DEBUG("failed to open subsock in scanForNewChannels(%s)",
@@ -249,7 +248,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     zcm_retcode_t sendmsg(zcm_msg_t msg)
     {
-        string channel = msg.channel;
+        zstring_t channel = msg.channel;
         if (channel.size() > ZCM_CHANNEL_MAXLEN)
             return ZCM_EINVALID;
         if (msg.len > MTU)
@@ -258,8 +257,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         void *sock = pubsockFindOrCreate(channel);
         if (sock == nullptr)
             return ZCM_ECONNECT;
-        int rc = zmq_send(sock, msg.buf, msg.len, 0);
-        if (rc == (int)msg.len)
+        zint_t rc = zmq_send(sock, msg.buf, msg.len, 0);
+        if (rc == (zint_t)msg.len)
             return ZCM_EOK;
         assert(rc == -1);
         ZCM_DEBUG("zmq_send failed with: %s", zmq_strerror(errno));
@@ -280,8 +279,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             } else {
                 for (auto it = subsocks.begin(); it != subsocks.end(); ) {
                     if (!it->second.second) { // This channel is only subscribed to implicitly
-                        string address = getAddress(it->first);
-                        int rc = zmq_disconnect(it->second.first, address.c_str());
+                        zstring_t address = getAddress(it->first);
+                        zint_t rc = zmq_disconnect(it->second.first, address.c_str());
                         if (rc == -1) {
                             ZCM_DEBUG("failed to disconnect subsock: %s", zmq_strerror(errno));
                             return ZCM_ECONNECT;
@@ -311,8 +310,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                         if (recvAllChannels) {
                             it->second.second = false;
                         } else {
-                            string address = getAddress(it->first);
-                            int rc = zmq_disconnect(it->second.first, address.c_str());
+                            zstring_t address = getAddress(it->first);
+                            zint_t rc = zmq_disconnect(it->second.first, address.c_str());
                             if (rc == -1) {
                                 ZCM_DEBUG("failed to disconnect subsock: %s", zmq_strerror(errno));
                                 return ZCM_ECONNECT;
@@ -336,7 +335,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     {
         // Build up a list of poll items
         vector<zmq_pollitem_t> pitems;
-        vector<string> pchannels;
+        vector<zstring_t> pchannels;
         {
             // Mutex used to protect 'subsocks' while allowing
             // recvmsgEnable() and recvmsg() to be called
@@ -351,7 +350,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             }
 
             pitems.resize(subsocks.size());
-            int i = 0;
+            zint_t i = 0;
             for (auto& elt : subsocks) {
                 auto& channel = elt.first;
                 auto& sock = elt.second.first;
@@ -365,7 +364,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         }
 
         timeout = (timeout >= 0) ? timeout : -1;
-        int rc = zmq_poll(pitems.data(), pitems.size(), timeout);
+        zint_t rc = zmq_poll(pitems.data(), pitems.size(), timeout);
         // TODO: implement better error handling, but can't assert because this triggers during
         //       clean up of the zmq subscriptions and context (may need to look towards having a
         //       "ZCM_ETERM" return code that we can use to cancel the recv message thread
@@ -374,7 +373,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             return ZCM_EAGAIN;
         }
         if (rc >= 0) {
-            for (size_t i = 0; i < pitems.size(); ++i) {
+            for (zsize_t i = 0; i < pitems.size(); ++i) {
                 auto& p = pitems[i];
                 if (p.revents != 0) {
                     // NOTE: zmq_recv can return an integer > the len parameter passed in
@@ -382,7 +381,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                     //       len are truncated and not placed in the buffer. This means
                     //       that you will always lose the first message you get that is
                     //       larger than recvmsgBufferSize
-                    int rc = zmq_recv(p.socket, recvmsgBuffer, recvmsgBufferSize, 0);
+                    zint_t rc = zmq_recv(p.socket, recvmsgBuffer, recvmsgBufferSize, 0);
                     msg->utime = TimeUtil::utime();
                     if (rc == -1) {
                         fprintf(stderr, "zmq_recv failed with: %s", zmq_strerror(errno));

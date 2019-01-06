@@ -119,11 +119,11 @@ static void test_fail_construct(void)
     zcm_t zcm;
 
     memset(&zcm, 0, sizeof(zcm));
-    ENSURE(!zcm_init(&zcm, "test-fail"));
-    ENSURE(ZCM_ECONNECT == zcm_errno(&zcm));
+    ENSURE(ZCM_EINVALID == zcm_init(&zcm, "test-fail"));
+    ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
 
     memset(&zcm, 0, sizeof(zcm));
-    ENSURE(!zcm_init_trans(&zcm, NULL));
+    ENSURE(ZCM_EINVALID == zcm_init_trans(&zcm, NULL));
     ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
 }
 
@@ -141,13 +141,13 @@ static void test_publish(void)
         /* channel size at limit */
         memset(channel, 'A', ZCM_CHANNEL_MAXLEN);
         channel[ZCM_CHANNEL_MAXLEN] = '\0';
-        ENSURE(zcm_publish(&zcm, channel, (zuint8_t*) &data, 1));
+        ENSURE(ZCM_EOK == zcm_publish(&zcm, channel, (zuint8_t*) &data, 1));
         ENSURE(ZCM_EOK == zcm_errno(&zcm));
 
         /* channel size 1 passed the limit */
         channel[ZCM_CHANNEL_MAXLEN] = 'A';
         channel[ZCM_CHANNEL_MAXLEN+1] = '\0';
-        ENSURE(!zcm_publish(&zcm, channel, (zuint8_t*) &data, 1));
+        ENSURE(ZCM_EINVALID == zcm_publish(&zcm, channel, (zuint8_t*) &data, 1));
         ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
     }
 
@@ -157,11 +157,11 @@ static void test_publish(void)
         char *data = malloc(GENERIC_MTU + 1);
 
         /* data size at limit */
-        ENSURE(zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU));
+        ENSURE(ZCM_EOK == zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU));
         ENSURE(ZCM_EOK == zcm_errno(&zcm));
 
         /* data size 1 passed the limit */
-        ENSURE(!zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU + 1));
+        ENSURE(ZCM_EINVALID == zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU + 1));
         ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
 
         free(data);
@@ -181,8 +181,8 @@ static void test_publish_msgdrop(void)
     const int MAX_PUBS = 100000;
     for (int i = 0; i < MAX_PUBS; i++) {
         char data = 'a';
-        zbool_t ret = zcm_publish(&zcm, "CHANNEL", (zuint8_t*) &data, 1);
-        if (!ret) {
+        zcm_retcode_t ret = zcm_publish(&zcm, "CHANNEL", (zuint8_t*) &data, 1);
+        if (ret == ZCM_EAGAIN) {
             ENSURE(ZCM_EAGAIN == zcm_errno(&zcm));
             goto done;
         }
@@ -205,12 +205,12 @@ static void test_sub(void)
     ENSURE(NULL == zcm_subscribe(&zcm, "CANNOT_SUB", NULL, NULL));
 
     /* can't unsubscribe */
-    ENSURE(NULL != (sub=zcm_subscribe(&zcm, "CANNOT_UNSUB", NULL, NULL)));
-    ENSURE(!zcm_unsubscribe(&zcm, sub));
+    ENSURE(NULL != (sub = zcm_subscribe(&zcm, "CANNOT_UNSUB", NULL, NULL)));
+    ENSURE(ZCM_EUNKNOWN == zcm_unsubscribe(&zcm, sub));
 
     /* all good */
-    ENSURE(NULL != (sub=zcm_subscribe(&zcm, "ALL_GOOD", NULL, NULL)));
-    ENSURE(zcm_unsubscribe(&zcm, sub));
+    ENSURE(NULL != (sub = zcm_subscribe(&zcm, "ALL_GOOD", NULL, NULL)));
+    ENSURE(ZCM_EOK == zcm_unsubscribe(&zcm, sub));
 
     zcm_cleanup(&zcm);
 }
