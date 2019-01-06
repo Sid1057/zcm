@@ -27,8 +27,10 @@ def build(ctx):
                                           excl=srcExcludes))
 
 
-    embedSource = ['zcm.h', 'zcm_private.h', 'zcm.c', 'zcm-cpp.hpp', 'zcm-cpp-impl.hpp',
-                   'zcm_coretypes.h', 'transport.h', 'nonblocking.h', 'nonblocking.c',
+    embedSource = ['zcm.h', 'zcm_private.h', 'zcm.c',
+                   'zcm-cpp.hpp', 'zcm-cpp-impl.hpp',
+                   'zcm_coretypes.h', 'zcm_base_types.h',
+                   'transport.h', 'nonblocking.h', 'nonblocking.c',
                    'transport/generic_serial_transport.h',
                    'transport/generic_serial_transport.c' ]
 
@@ -60,7 +62,8 @@ def build(ctx):
         after  = 'embed-tar-finish')
 
     ctx.install_files('${PREFIX}/include/zcm',
-                      ['zcm.h', 'zcm_coretypes.h', 'transport.h', 'transport_registrar.h',
+                      ['zcm.h', 'zcm_coretypes.h', 'zcm_base_types.h',
+                       'transport.h', 'transport_registrar.h',
                        'url.h', 'eventlog.h', 'zcm-cpp.hpp', 'zcm-cpp-impl.hpp',
                        'transport_register.hpp', 'message_tracker.hpp'])
 
