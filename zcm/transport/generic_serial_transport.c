@@ -287,11 +287,11 @@ zcm_retcode_t serial_recvmsg(zcm_trans_generic_serial_t *zt, zcm_msg_t *msg, zin
     if (cb_top(&zt->recvBuffer, consumed++) != 0x00)                           goto fail;
 
     // Msg sizes
-    chan_len  = cb_top(&zt->recvBuffer, consumed++);
-    msg->len  = cb_top(&zt->recvBuffer, consumed++) << 24;
-    msg->len |= cb_top(&zt->recvBuffer, consumed++) << 16;
-    msg->len |= cb_top(&zt->recvBuffer, consumed++) << 8;
-    msg->len |= cb_top(&zt->recvBuffer, consumed++);
+    chan_len  = (zuint32_t) cb_top(&zt->recvBuffer, consumed++);
+    msg->len  = (zuint32_t) cb_top(&zt->recvBuffer, consumed++) << 24;
+    msg->len |= (zuint32_t) cb_top(&zt->recvBuffer, consumed++) << 16;
+    msg->len |= (zuint32_t) cb_top(&zt->recvBuffer, consumed++) << 8;
+    msg->len |= (zuint32_t) cb_top(&zt->recvBuffer, consumed++);
 
     if (chan_len > ZCM_CHANNEL_MAXLEN) goto fail;
     if (msg->len > zt->mtu)            goto fail;

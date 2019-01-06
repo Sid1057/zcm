@@ -24,12 +24,6 @@
 # define ZCM_DEBUG(...)
 #endif
 
-static zcm_retcode_t ZCM_RETURN_CODE(zcm_t* zcm, zcm_retcode_t rc) { zcm->err = rc; return rc; }
-#define X(ENUM, IGNORE1, IGNORE2) \
-    static zcm_retcode_t _ ## ENUM(zcm_t* zcm) { zcm->err = ENUM; return ENUM; }
-ZCM_RETURN_CODES
-#undef X
-
 #ifndef ZCM_EMBEDDED
 enum zcm_return_codes zcm_retcode_name_to_enum(const zchar_t* zcm_retcode_name)
 {
@@ -79,10 +73,11 @@ zcm_retcode_t zcm_init(zcm_t* zcm, const zchar_t* url)
         if (!url) {
             fprintf(stderr, "Please specify zcm url when creating zcm or "
                             "set environment variable ZCM_DEFAULT_URL\n");
-            return _ZCM_EINVALID(zcm);
+            zcm->err = ZCM_EINVALID;
+            return zcm->err;
         }
     }
-    zcm_retcode_t ret = ZCM_EINVALID;
+    zcm->err = ZCM_EINVALID;
     zcm_url_t* u = zcm_url_create(url);
     ZCM_ASSERT(u);
     const zchar_t* protocol = zcm_url_protocol(u);
@@ -91,7 +86,7 @@ zcm_retcode_t zcm_init(zcm_t* zcm, const zchar_t* url)
     if (creator) {
         zcm_trans_t* trans = creator(u);
         if (trans) {
-            ret = zcm_init_trans(zcm, trans);
+            zcm->err = zcm_init_trans(zcm, trans);
         } else {
             ZCM_DEBUG("failed to create transport for '%s'", url);
         }
@@ -100,7 +95,7 @@ zcm_retcode_t zcm_init(zcm_t* zcm, const zchar_t* url)
     }
 
     zcm_url_destroy(u);
-    return ZCM_RETURN_CODE(zcm, ret);
+    return zcm->err;
 }
 #endif
 
@@ -109,7 +104,8 @@ zcm_retcode_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
     if (zt == NULL) {
         zcm->type = ZCM_NONBLOCKING;
         zcm->impl = NULL;
-        return _ZCM_EINVALID(zcm);
+        zcm->err = ZCM_EINVALID;
+        return zcm->err;
     }
 
 #ifndef ZCM_EMBEDDED
@@ -117,14 +113,16 @@ zcm_retcode_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
         zcm->type = ZCM_BLOCKING;
         zcm->impl = zcm_blocking_create(zcm, zt);
         ZCM_ASSERT(zcm->impl);
-        return _ZCM_EOK(zcm);
+        zcm->err = ZCM_EOK;
+        return zcm->err;
     }
 #endif
     ZCM_ASSERT(zt->trans_type == ZCM_NONBLOCKING);
     zcm->type = ZCM_NONBLOCKING;
     zcm->impl = zcm_nonblocking_create(zcm, zt);
     ZCM_ASSERT(zcm->impl);
-    return _ZCM_EOK(zcm);
+    zcm->err = ZCM_EOK;
+    return zcm->err;
 }
 
 void zcm_cleanup(zcm_t* zcm)
@@ -193,7 +191,8 @@ zcm_retcode_t zcm_try_flush(zcm_t* zcm)
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm_nonblocking_flush(zcm->impl);
-    return _ZCM_EOK(zcm);
+    zcm->err = ZCM_EOK;
+    return zcm->err;
 }
 
 zcm_sub_t* zcm_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr)
