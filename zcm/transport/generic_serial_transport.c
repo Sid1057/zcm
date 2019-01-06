@@ -410,7 +410,7 @@ static zcm_trans_methods_t methods = {
 
 static zcm_trans_generic_serial_t *cast(zcm_trans_t *zt)
 {
-    assert(zt->vtbl == &methods);
+    ZCM_ASSERT(zt->vtbl == &methods);
     return (zcm_trans_generic_serial_t*)zt;
 }
 

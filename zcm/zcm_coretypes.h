@@ -719,7 +719,7 @@ static inline zint32_t __string_encode_array(void *_buf, zuint32_t offset, zuint
         thislen = __int32_t_encode_array(_buf, offset + pos, maxlen - pos, &length, 1);
         if (thislen < 0) return thislen; else pos += thislen;
 
-        thislen = __int8_t_encode_array(_buf, offset + pos, maxlen - pos, (int8_t*) p[element], length);
+        thislen = __int8_t_encode_array(_buf, offset + pos, maxlen - pos, (zint8_t*) p[element], length);
         if (thislen < 0) return thislen; else pos += thislen;
     }
 

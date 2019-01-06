@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <float.h>
 #include <string.h>
-#include <sys/types.h>
 
 #ifndef ZCM_EMBEDDED
 #include <assert.h>
@@ -30,7 +29,6 @@
     X(   float, zfloat32_t) /* Must be at least 32 bits long */ \
     X(  double, zfloat64_t) /* Must be at least 64 bits long */ \
     X(  size_t,    zsize_t) /* Must have a size no less than the datatype returned by sizeof */ \
-    X( ssize_t,   zssize_t) /* Must have a size equal to zsize_t */ \
     X(     int,     zint_t) \
     X(unsigned,    zuint_t) \
 
@@ -43,8 +41,10 @@
 #endif
 
 #ifndef ZCM_EMBEDDED
+#include <sys/types.h>
 #define ZCM_BASE_TYPES_NO_EMBEDDED \
-    X(off_t, zoff_t)
+    X( ssize_t,   zssize_t) /* Must have a size equal to zsize_t */ \
+    X(   off_t,     zoff_t)
 #else
 #define ZCM_BASE_TYPES_NO_EMBEDDED
 #endif
