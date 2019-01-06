@@ -45,7 +45,7 @@ zcm_t* zcm_create(const zchar_t* url)
 {
     zcm_t* z = zcm_malloc(sizeof(zcm_t));
     ZCM_ASSERT(z);
-    if (!zcm_init(z, url)) {
+    if (zcm_init(z, url) != ZCM_EOK) {
         zcm_free(z);
         return NULL;
     }
@@ -57,7 +57,7 @@ zcm_t* zcm_create_trans(zcm_trans_t* zt)
 {
     zcm_t* z = zcm_malloc(sizeof(zcm_t));
     ZCM_ASSERT(z);
-    if (!zcm_init_trans(z, zt)) {
+    if (zcm_init_trans(z, zt) != ZCM_EOK) {
         zcm_free(z);
         return NULL;
     }
