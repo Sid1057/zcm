@@ -22,7 +22,7 @@ struct zcm_nonblocking
 static zbool_t isRegexChannel(const zchar_t* c, zint32_t clen)
 {
     /* These chars are considered regex */
-    zint32_t_t i;
+    zint32_t i;
     for (i = 0; i < clen; ++i)
         if (c[i] == '(' || c[i] == ')' || c[i] == '|' ||
             c[i] == '.' || c[i] == '*' || c[i] == '+') return ztrue;
@@ -73,7 +73,7 @@ void zcm_nonblocking_destroy(zcm_nonblocking_t* zcm)
     if (!zcm) return;
     if (zcm->zt) zcm_trans_destroy(zcm->zt);
     zcm->zt = NULL;
-    free(zcm);
+    zcm_free(zcm);
 }
 
 zcm_retcode_t zcm_nonblocking_publish(zcm_nonblocking_t* z, const zchar_t* channel,
@@ -128,13 +128,13 @@ zcm_sub_t* zcm_nonblocking_subscribe(zcm_nonblocking_t* zcm, const zchar_t* chan
 
 zcm_retcode_t zcm_nonblocking_unsubscribe(zcm_nonblocking_t* zcm, zcm_sub_t* sub)
 {
-    // RRR (Bendes) This doesn't support regex
+    /* RRR (Bendes) This doesn't support regex */
     zint32_t i;
     zint32_t match_idx = sub - zcm->subs;
     zint32_t num_chan_matches = 0;
     zcm_retcode_t rc = ZCM_EOK;
     for (i = 0; i < zcm->subInUseEnd; ++i) {
-        if (!zcm->subInUseEnd[i]) continue;
+        if (!zcm->subInUse[i]) continue;
         /* Note: it would be nice if we didn't have to do a string comp to unsubscribe, but
                  we need to count the number of channel matches so we know when we can disable
                  the transport's recvmsg_enable */

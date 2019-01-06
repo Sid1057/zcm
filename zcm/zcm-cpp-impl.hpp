@@ -47,22 +47,22 @@ inline ZCM::~ZCM()
     zcm = nullptr;
 }
 
-inline bool ZCM::good() const
+inline zbool_t ZCM::good() const
 {
     return zcm != nullptr && err() == ZCM_EOK;
 }
 
-inline int ZCM::err() const
+inline zcm_retcode_t ZCM::err() const
 {
     return zcm_errno(zcm);
 }
 
-inline const char* ZCM::strerror() const
+inline const zchar_t* ZCM::strerror() const
 {
     return zcm_strerror(zcm);
 }
 
-inline const char* ZCM::strerrno(int err) const
+inline const zchar_t* ZCM::strerrno(zcm_retcode_t err) const
 {
     return zcm_strerrno(err);
 }
@@ -103,20 +103,20 @@ inline void ZCM::resume()
 #endif
 
 #ifndef ZCM_EMBEDDED
-inline bool ZCM::handle()
+inline zbool_t ZCM::handle()
 {
     return zcm_handle(zcm);
 }
 #endif
 
 #ifndef ZCM_EMBEDDED
-inline void ZCM::setQueueSize(uint32_t sz)
+inline void ZCM::setQueueSize(zuint32_t sz)
 {
     return zcm_set_queue_size(zcm, sz);
 }
 #endif
 
-inline bool ZCM::handleNonblock()
+inline zbool_t ZCM::handleNonblock()
 {
     return zcm_handle_nonblock(zcm);
 }
@@ -126,25 +126,25 @@ inline void ZCM::flush()
     return zcm_flush(zcm);
 }
 
-inline bool ZCM::publish(const std::string& channel, const zuint8_t* data, zuint32_t len)
+inline zbool_t ZCM::publish(const std::string& channel, const zuint8_t* data, zuint32_t len)
 {
     return publishRaw(channel, data, len);
 }
 
 template <class Msg>
-inline bool ZCM::publish(const std::string& channel, const Msg* msg)
+inline zbool_t ZCM::publish(const std::string& channel, const Msg* msg)
 {
     zuint32_t len = msg->getEncodedSize();
     zuint8_t* buf = new zuint8_t[len];
     if (!buf) {
         zcm->err = ZCM_EMEMORY;
-        return false;
+        return zfalse;
     }
     zint32_t encodeRet = msg->encode(buf, 0, len);
     if (encodeRet < 0 || (zuint32_t) encodeRet != len) {
         delete[] buf;
         zcm->err = ZCM_EAGAIN;
-        return false;
+        return zfalse;
     }
     auto ret = publishRaw(channel, buf, len);
     delete[] buf;
@@ -188,25 +188,25 @@ class TypedSubscription : public virtual Subscription
   public:
     virtual ~TypedSubscription() {}
 
-    inline int readMsg(const ReceiveBuffer* rbuf)
+    inline zbool_t readMsg(const ReceiveBuffer* rbuf)
     {
-        int status = msgMem.decode(rbuf->data, 0, rbuf->data_size);
+        zint32_t status = msgMem.decode(rbuf->data, 0, rbuf->data_size);
         if (status < 0) {
             #ifndef ZCM_EMBEDDED
             fprintf (stderr, "error %d decoding %s!!!\n", status, Msg::getTypeName());
             #endif
-            return -1;
+            return zfalse;
         }
-        return 0;
+        return ztrue;
     }
 
     inline void typedDispatch(const ReceiveBuffer* rbuf, const std::string& channel)
     {
-        if (readMsg(rbuf) != 0) return;
+        if (!readMsg(rbuf)) return;
         (*typedCallback)(rbuf, channel, &msgMem, usr);
     }
 
-    static inline void dispatch(const ReceiveBuffer* rbuf, const char* channel, void* usr)
+    static inline void dispatch(const ReceiveBuffer* rbuf, const zchar_t* channel, void* usr)
     {
         ((TypedSubscription<Msg>*)usr)->typedDispatch(rbuf, channel);
     }
@@ -228,25 +228,25 @@ class TypedFunctionalSubscription : public virtual Subscription
   public:
     virtual ~TypedFunctionalSubscription() {}
 
-    inline int readMsg(const ReceiveBuffer* rbuf)
+    inline zbool_t readMsg(const ReceiveBuffer* rbuf)
     {
-        int status = msgMem.decode(rbuf->data, 0, rbuf->data_size);
+        zint32_t status = msgMem.decode(rbuf->data, 0, rbuf->data_size);
         if (status < 0) {
             #ifndef ZCM_EMBEDDED
             fprintf (stderr, "error %d decoding %s!!!\n", status, Msg::getTypeName());
             #endif
-            return -1;
+            return zfalse;
         }
-        return 0;
+        return ztrue;
     }
 
     inline void typedDispatch(const ReceiveBuffer* rbuf, const std::string& channel)
     {
-        if (readMsg(rbuf) != 0) return;
+        if (!readMsg(rbuf)) return;
         cb(rbuf, channel, &msgMem);
     }
 
-    static inline void dispatch(const ReceiveBuffer* rbuf, const char* channel, void* usr)
+    static inline void dispatch(const ReceiveBuffer* rbuf, const zchar_t* channel, void* usr)
     {
         ((TypedFunctionalSubscription<Msg>*)usr)->typedDispatch(rbuf, channel);
     }
@@ -271,7 +271,7 @@ class HandlerSubscription : public virtual Subscription
         (handler->*handlerCallback)(rbuf, channel);
     }
 
-    static inline void dispatch(const ReceiveBuffer* rbuf, const char* channel, void* usr)
+    static inline void dispatch(const ReceiveBuffer* rbuf, const zchar_t* channel, void* usr)
     {
         ((HandlerSubscription<Handler>*)usr)->handlerDispatch(rbuf, channel);
     }
@@ -283,7 +283,8 @@ class TypedHandlerSubscription : public TypedSubscription<Msg>, HandlerSubscript
     friend class ZCM;
 
   protected:
-    void (Handler::*typedHandlerCallback)(const ReceiveBuffer* rbuf, const std::string& channel,
+    void (Handler::*typedHandlerCallback)(const ReceiveBuffer* rbuf,
+                                          const std::string& channel,
                                           const Msg* msg);
 
   public:
@@ -293,7 +294,7 @@ class TypedHandlerSubscription : public TypedSubscription<Msg>, HandlerSubscript
     {
         // Unfortunately, we need to add "this" here to handle template inheritance:
         // https://isocpp.org/wiki/faq/templates#nondependent-name-lookup-members
-        if (this->readMsg(rbuf) != 0) return;
+        if (!this->readMsg(rbuf)) return;
         (this->handler->*typedHandlerCallback)(rbuf, channel, &this->msgMem);
     }
 
@@ -301,7 +302,6 @@ class TypedHandlerSubscription : public TypedSubscription<Msg>, HandlerSubscript
     {
         ((TypedHandlerSubscription<Msg, Handler>*)usr)->typedHandlerDispatch(rbuf, channel);
     }
-
 };
 
 // TODO: lots of room to condense the implementations of the various subscribe functions
@@ -422,7 +422,7 @@ inline void ZCM::unsubscribe(Subscription* sub)
 inline zcm_t* ZCM::getUnderlyingZCM()
 { return zcm; }
 
-inline bool ZCM::publishRaw(const std::string& channel, const zuint8_t* data, zuint32_t len)
+inline zbool_t ZCM::publishRaw(const std::string& channel, const zuint8_t* data, zuint32_t len)
 { return zcm_publish(zcm, channel.c_str(), data, len); }
 
 inline void ZCM::subscribeRaw(void*& rawSub, const std::string& channel,
@@ -458,12 +458,12 @@ inline LogFile::~LogFile()
     close();
 }
 
-inline bool LogFile::good() const
+inline zbool_t LogFile::good() const
 {
     return eventlog != nullptr;
 }
 
-inline zint64_t LogFile::seekToTimestamp(zint64_t timestamp)
+inline zcm_retcode_t LogFile::seekToTimestamp(zint64_t timestamp)
 {
     return zcm_eventlog_seek_to_timestamp(eventlog, timestamp);
 }
@@ -475,11 +475,9 @@ inline FILE* LogFile::getFilePtr()
 
 inline const LogEvent* LogFile::cplusplusIfyEvent(zcm_eventlog_event_t* evt)
 {
-    if (lastevent)
-        zcm_eventlog_free_event(lastevent);
+    if (lastevent) zcm_eventlog_free_event(lastevent);
     lastevent = evt;
-    if (!evt)
-        return nullptr;
+    if (!evt) return nullptr;
     curEvent.eventnum = evt->eventnum;
     curEvent.channel.assign(evt->channel, evt->channellen);
     curEvent.timestamp = evt->timestamp;
@@ -500,7 +498,7 @@ inline const LogEvent* LogFile::readPrevEvent()
     return cplusplusIfyEvent(evt);
 }
 
-inline const LogEvent* LogFile::readEventAtOffset(off_t offset)
+inline const LogEvent* LogFile::readEventAtOffset(zoff_t offset)
 {
     zcm_eventlog_event_t* evt = zcm_eventlog_read_event_at_offset(eventlog, offset);
     return cplusplusIfyEvent(evt);
@@ -514,7 +512,7 @@ inline zbool_t LogFile::writeEvent(const LogEvent* event)
     evt.channellen = event->channel.size();
     evt.datalen = event->datalen;
     // casting away constness okay because evt isn't used past the end of this function
-    evt.channel = (char*) event->channel.c_str();
+    evt.channel = (zchar_t*) event->channel.c_str();
     evt.data = event->data;
     return zcm_eventlog_write_event(eventlog, &evt);
 }

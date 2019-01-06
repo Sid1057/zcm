@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
             if (evt == nullptr) break;
 
             int64_t msg_hash;
-            __int64_t_decode_array(evt->data, 0, 8, &msg_hash, 1);
+            __zint64_t_decode_array(evt->data, 0, 8, &msg_hash, 1);
             const TypeMetadata* md = types.getByHash(msg_hash);
             if (!md) continue;
 

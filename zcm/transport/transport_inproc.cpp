@@ -22,7 +22,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     // using the "inFlight" pointers to store their memory until the next message is dispatched
     // Note: Have to use free() to clean up chan memory in these because we create them via strdup
     deque<zcm_msg_t*> msgs;
-    const zchar*    inFlightChanMem = nullptr;
+    const zchar_t*  inFlightChanMem = nullptr;
           zuint8_t* inFlightDataMem = nullptr;
 
     condition_variable msgCond;
@@ -37,13 +37,13 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     ~ZCM_TRANS_CLASSNAME()
     {
         for (auto msg: msgs) {
-            free((void*) msg->channel);
+            zcm_free((void*) msg->channel);
             delete [] msg->buf;
             delete msg;
         }
         msgs.clear();
 
-        free((void*) inFlightChanMem);
+        zcm_free((void*) inFlightChanMem);
         delete [] inFlightDataMem;
     }
 
@@ -103,7 +103,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         }
 
         // Clean up memory from last message
-        free((void*) inFlightChanMem);
+        zcm_free((void*) inFlightChanMem);
         delete [] inFlightDataMem;
 
         // Steal the dynamic memory from the front of the queue, but hang onto the

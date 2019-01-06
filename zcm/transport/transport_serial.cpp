@@ -411,7 +411,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                 // Note: No need to lock here ONLY because the internals of
                 //       generic serial transport recvmsg only use the recv related
                 //       data members and touch no variables related to sending
-                int ret = zcm_trans_recvmsg(this->gst, msg, timeoutLeft);
+                zcm_retcode_t ret = zcm_trans_recvmsg(this->gst, msg, timeoutLeft);
                 if (ret == ZCM_EOK) return ret;
 
                 uint64_t diff = TimeUtil::utime() - startUtime;

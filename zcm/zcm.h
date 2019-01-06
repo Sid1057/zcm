@@ -24,7 +24,7 @@ typedef struct zcm_sub_t      zcm_sub_t;
 
 /* Generic message handler function type */
 typedef void (*zcm_msg_handler_t)(const zcm_recv_buf_t* rbuf,
-                                  const char* channel, void* usr);
+                                  const zchar_t* channel, void* usr);
 
 /* Note: some language bindings depend on the specific memory layout
  *       of ZCM structures. If you change these, be sure to update
@@ -49,13 +49,13 @@ struct zcm_recv_buf_t
 };
 
 #ifndef ZCM_EMBEDDED
-enum zcm_return_codes zcm_retcode_name_to_enum(const char* zcm_retcode_name);
+enum zcm_return_codes zcm_retcode_name_to_enum(const zchar_t* zcm_retcode_name);
 #endif
 
 /* Standard create/destroy functions. These will malloc() and free() the zcm_t object.
    Sets zcm errno on failure */
 #ifndef ZCM_EMBEDDED
-zcm_t* zcm_create(const char* url);
+zcm_t* zcm_create(const zchar_t* url);
 #endif
 zcm_t* zcm_create_trans(zcm_trans_t* zt);
 void   zcm_destroy(zcm_t* zcm);
@@ -64,7 +64,7 @@ void   zcm_destroy(zcm_t* zcm);
 /* Initialize a zcm object allocated by caller
    Returns true on success, and false on failure
    Sets zcm errno on failure */
-zbool_t zcm_init(zcm_t* zcm, const char* url);
+zbool_t zcm_init(zcm_t* zcm, const zchar_t* url);
 #endif
 
 /* Initialize a zcm instance allocated by caller using a transport provided by caller
@@ -79,21 +79,21 @@ void zcm_cleanup(zcm_t* zcm);
 enum zcm_return_codes zcm_errno(const zcm_t* zcm);
 
 /* Return the last error in string format */
-const char* zcm_strerror(const zcm_t* zcm);
+const zchar_t* zcm_strerror(const zcm_t* zcm);
 
 /* Returns the error string from the error number */
-const char* zcm_strerrno(enum zcm_return_codes err);
+const zchar_t* zcm_strerrno(enum zcm_return_codes err);
 
 /* Subscribe to zcm messages
    Returns a subscription object on success, and NULL on failure
    Sets zcm errno on failure */
-zcm_sub_t* zcm_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, void* usr);
+zcm_sub_t* zcm_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr);
 
 /* Subscribe to zcm messages
    Returns a subscription object on success, and NULL on failure.
    Can fail to subscribe if zcm is already running
    Sets zcm errno on failure */
-zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, void* usr);
+zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr);
 
 /* Unsubscribe to zcm messages, freeing the subscription object
    Returns ZCM_EOK on success, -1 on failure

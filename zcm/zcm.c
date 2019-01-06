@@ -25,7 +25,7 @@
 #endif
 
 #ifndef ZCM_EMBEDDED
-enum zcm_return_codes zcm_retcode_name_to_enum(const char* zcm_retcode_name)
+enum zcm_return_codes zcm_retcode_name_to_enum(const zchar_t* zcm_retcode_name)
 {
     #define X(n, v, s) if (strcmp(#n, zcm_retcode_name) == 0) return v;
     ZCM_RETURN_CODES
@@ -35,12 +35,12 @@ enum zcm_return_codes zcm_retcode_name_to_enum(const char* zcm_retcode_name)
 #endif
 
 #ifndef ZCM_EMBEDDED
-zcm_t* zcm_create(const char* url)
+zcm_t* zcm_create(const zchar_t* url)
 {
-    zcm_t* z = malloc(sizeof(zcm_t));
+    zcm_t* z = zcm_malloc(sizeof(zcm_t));
     ZCM_ASSERT(z);
     if (zcm_init(z, url) == -1) {
-        free(z);
+        zcm_free(z);
         return NULL;
     }
     return z;
@@ -49,10 +49,10 @@ zcm_t* zcm_create(const char* url)
 
 zcm_t* zcm_create_trans(zcm_trans_t* zt)
 {
-    zcm_t* z = malloc(sizeof(zcm_t));
+    zcm_t* z = zcm_malloc(sizeof(zcm_t));
     ZCM_ASSERT(z);
     if (zcm_init_trans(z, zt) == -1) {
-        free(z);
+        zcm_free(z);
         return NULL;
     }
     return z;
@@ -61,11 +61,11 @@ zcm_t* zcm_create_trans(zcm_trans_t* zt)
 void zcm_destroy(zcm_t* zcm)
 {
     zcm_cleanup(zcm);
-    free(zcm);
+    zcm_free(zcm);
 }
 
 #ifndef ZCM_EMBEDDED
-zbool_t zcm_init(zcm_t* zcm, const char* url)
+zbool_t zcm_init(zcm_t* zcm, const zchar_t* url)
 {
     zcm->err = ZCM_ECONNECT;
     /* If we have no url, try to use the env var */
@@ -80,7 +80,7 @@ zbool_t zcm_init(zcm_t* zcm, const char* url)
     zbool_t ret = zfalse;
     zcm_url_t* u = zcm_url_create(url);
     ZCM_ASSERT(u);
-    const char* protocol = zcm_url_protocol(u);
+    const zchar_t* protocol = zcm_url_protocol(u);
 
     zcm_trans_create_func* creator = zcm_transport_find(protocol);
     if (creator) {
@@ -142,22 +142,21 @@ enum zcm_return_codes zcm_errno(const zcm_t* zcm)
     return zcm->err;
 }
 
-static const char* errcode_str[] = {
+static const zchar_t* errcode_str[] = {
     #define X(n, v, s) s,
     ZCM_RETURN_CODES
     #undef X
 };
 
-const char* zcm_strerror(const zcm_t* zcm)
+const zchar_t* zcm_strerror(const zcm_t* zcm)
 {
     return zcm_strerrno(zcm->err);
 }
 
-const char* zcm_strerrno(enum zcm_return_codes err)
+const zchar_t* zcm_strerrno(enum zcm_return_codes err)
 {
-    if (((unsigned) err) >= ZCM_NUM_RETURN_CODES) err = ZCM_NUM_RETURN_CODES;
-
-    return errcode_str[(unsigned) err];
+    if (((zuint32_t) err) >= ZCM_NUM_RETURN_CODES) err = ZCM_NUM_RETURN_CODES;
+    return errcode_str[(zuint32_t) err];
 }
 
 zbool_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zuint32_t len)
@@ -196,7 +195,7 @@ zbool_t zcm_try_flush(zcm_t* zcm)
     return ztrue;
 }
 
-zcm_sub_t* zcm_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, void* usr)
+zcm_sub_t* zcm_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr)
 {
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING)
@@ -206,7 +205,7 @@ zcm_sub_t* zcm_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, 
     return zcm_nonblocking_subscribe(zcm->impl, channel, cb, usr);
 }
 
-zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, void* usr)
+zcm_sub_t* zcm_try_subscribe(zcm_t* zcm, const zchar_t* channel, zcm_msg_handler_t cb, void* usr)
 {
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING)

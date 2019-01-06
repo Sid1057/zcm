@@ -30,26 +30,26 @@ class ZCM
     inline ZCM(zcm_trans_t* zt);
     virtual inline ~ZCM();
 
-    virtual inline bool good() const;
+    virtual inline zbool_t good() const;
     // returns zcm_errno()
-    virtual inline enum zcm_return_codes err() const;
-    virtual inline const char* strerror() const;
-    virtual inline const char* strerrno(enum zcm_return_codes err) const;
+    virtual inline zcm_retcode_t err() const;
+    virtual inline const zchar_t* strerror() const;
+    virtual inline const zchar_t* strerrno(zcm_retcode_t err) const;
 
     #ifndef ZCM_EMBEDDED
-    virtual inline void run();
-    virtual inline void start();
-    virtual inline void stop();
-    virtual inline void pause();
-    virtual inline void resume();
-    virtual inline bool handle();
-    virtual inline void setQueueSize(uint32_t sz);
+    virtual inline    void run();
+    virtual inline    void start();
+    virtual inline    void stop();
+    virtual inline    void pause();
+    virtual inline    void resume();
+    virtual inline zbool_t handle();
+    virtual inline    void setQueueSize(uint32_t sz);
     #endif
-    virtual inline bool handleNonblock();
-    virtual inline void flush();
+    virtual inline zbool_t handleNonblock();
+    virtual inline    void flush();
 
   public:
-    inline bool publish(const std::string& channel, const zuint8_t* data, zuint32_t len);
+    inline zbool_t publish(const std::string& channel, const zuint8_t* data, zuint32_t len);
 
     // Note: if we make a publish binding that takes a const message reference, the compiler does
     //       not select the right version between the pointer and reference versions, so when the
@@ -57,7 +57,7 @@ class ZCM
     //       compile errors (turns the input into a double pointer). We have to choose one or the
     //       other for the api.
     template <class Msg>
-    inline bool publish(const std::string& channel, const Msg* msg);
+    inline zbool_t publish(const std::string& channel, const Msg* msg);
 
     inline Subscription* subscribe(const std::string& channel,
                                    void (*cb)(const ReceiveBuffer* rbuf,
@@ -99,9 +99,9 @@ class ZCM
 
   protected:
     /**** Methods for inheritor override ****/
-    virtual inline bool publishRaw(const std::string& channel,
-                                   const zuint8_t* data,
-                                   zuint32_t len);
+    virtual inline zbool_t publishRaw(const std::string& channel,
+                                      const zuint8_t* data,
+                                      zuint32_t len);
 
     // Set the value of "rawSub" with your underlying subscription. "rawSub" will be passed
     // (by reference) into unsubscribeRaw when zcm->unsubscribe() is called on a cpp subscription
@@ -135,7 +135,7 @@ class Subscription
     inline void dispatch(const ReceiveBuffer* rbuf, const std::string& channel)
     { (*callback)(rbuf, channel, usr); }
 
-    static inline void dispatch(const ReceiveBuffer* rbuf, const char* channel, void* usr)
+    static inline void dispatch(const ReceiveBuffer* rbuf, const zchar_t* channel, void* usr)
     { ((Subscription*)usr)->dispatch(rbuf, channel); }
 };
 
@@ -156,18 +156,18 @@ struct LogFile
     /**** Methods for ctor/dtor/check ****/
     inline LogFile(const std::string& path, const std::string& mode);
     inline ~LogFile();
-    inline bool good() const;
+    inline zbool_t good() const;
     inline void close();
 
     /**** Methods general operations ****/
-    inline int seekToTimestamp(zint64_t timestamp);
+    inline zcm_retcode_t seekToTimestamp(zint64_t timestamp);
     inline FILE* getFilePtr();
 
     /**** Methods for read/write ****/
     // NOTE: user should NOT hold-onto the returned ptr across successive calls
     inline const LogEvent* readNextEvent();
     inline const LogEvent* readPrevEvent();
-    inline const LogEvent* readEventAtOffset(off_t offset);
+    inline const LogEvent* readEventAtOffset(zoff_t offset);
     inline zbool_t         writeEvent(const LogEvent* event);
 
   private:

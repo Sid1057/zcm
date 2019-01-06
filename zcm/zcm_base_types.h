@@ -15,7 +15,8 @@
 
 #define ZCM_BASE_TYPES \
     X( uint8_t,    zbyte_t) /* Must be at least  8 bits long */ \
-    X(  int8_t,    zbool_t) /* Must be at least  8 bits long */ \
+    X( uint8_t,    zbool_t) /* Must be at least  8 bits long */ \
+    /* zchar_t must be compatible with all str functions in string.h */ \
     X(    char,    zchar_t) /* Must be at least  8 bits long */ \
     X( uint8_t,   zuint8_t) /* Must be at least  8 bits long */ \
     X(  int8_t,    zint8_t) /* Must be at least  8 bits long */ \
@@ -27,6 +28,13 @@
     X( int64_t,   zint64_t) /* Must be at least 64 bits long */ \
     X(   float, zfloat32_t) /* Must be at least 32 bits long */ \
     X(  double, zfloat64_t) /* Must be at least 64 bits long */ \
+
+#ifndef ZCM_EMBEDDED
+#define ZCM_BASE_TYPES_NO_EMBEDDED \
+    X(off_t, zoff_t)
+#else
+#define ZCM_BASE_TYPES_NO_EMBEDDED
+#endif
 
 #define ZCM_RETURN_CODES \
     X(ZCM_EOK,              0, "Okay, no errors"                       ) \
@@ -44,18 +52,22 @@
 
 #define ZCM_CHANNEL_MAXLEN 32
 
-#define zcm_malloc malloc
+#define zcm_malloc(sz) ((sz) ? malloc(sz) : NULL)
+#define zcm_calloc(sz,elts) ((sz) ? ((elts) ? calloc(sz, elts) : NULL) : NULL)
+#define zcm_free free
 
-#define X(_, NATIVE_TYPE, ZCM_BASE_TYPE) \
-    typedef NATIVE_TYPE ZCM_BASE_TYPE
+#define X(NATIVE_TYPE, ZCM_BASE_TYPE) \
+    typedef NATIVE_TYPE ZCM_BASE_TYPE;
+ZCM_BASE_TYPES
+ZCM_BASE_TYPES_NO_EMBEDDED
 #undef X
 
 /* Return codes */
-typedef enum zcm_return_codes zcm_retcode_t
 enum zcm_return_codes {
     #define X(n, v, s) n = v,
     ZCM_RETURN_CODES
     #undef X
 };
+typedef enum zcm_return_codes zcm_retcode_t;
 
-#endif // __ZCM_BASE_TYPES__
+#endif /* __ZCM_BASE_TYPES__ */

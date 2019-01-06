@@ -48,7 +48,8 @@ struct Msg
         msg.utime = utime;
         msg.channel = strdup(channel);
         msg.len = len;
-        msg.buf = (uint8_t*)malloc(len);
+        msg.buf = (zuint8_t*) zcm_malloc(len);
+        ZCM_ASSERT(msg.buf);
         memcpy(msg.buf, buf, len);
     }
 
@@ -56,10 +57,8 @@ struct Msg
 
     ~Msg()
     {
-        if (msg.channel)
-            free((void*)msg.channel);
-        if (msg.buf)
-            free((void*)msg.buf);
+        if (msg.channel) zcm_free((void*)msg.channel);
+        if (msg.buf) zcm_free((void*)msg.buf);
         memset(&msg, 0, sizeof(msg));
     }
 
@@ -476,7 +475,7 @@ int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
     }
 
     bool success = true;
-    if (sub->regexObj) {
+    if (sub->regex) {
         success = deleteFromSubList(subRegex, sub);
     } else {
         auto it = subs.find(sub->channel);

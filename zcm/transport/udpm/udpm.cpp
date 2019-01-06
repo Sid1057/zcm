@@ -299,7 +299,7 @@ zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
                               (char*)msg.buf, msg.len);
 
         int packet_size = sizeof(hdr) + payload_size;
-        ZCM_DEBUG("transmitting %zu byte [%s] payload (%d byte pkt)",
+        ZCM_DEBUG("transmitting %u byte [%s] payload (%d byte pkt)",
                   msg.len, msg.channel, packet_size);
         msg_seqno++;
 
@@ -309,7 +309,7 @@ zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
 
         switch (errno) {
             case EAGAIN:
-                return ZCM_EAGAIN
+                return ZCM_EAGAIN;
                 break;
             case ENOMEM:
                 return ZCM_EMEMORY;
@@ -478,7 +478,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static zcm_retcode_t _recvmsgEnable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
     { return ZCM_EOK; }
 
-    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zuint32_t timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zint32_t timeout)
     { return cast(zt)->udpm.recvmsg(msg, timeout); }
 
     static void _destroy(zcm_trans_t *zt)
@@ -507,7 +507,7 @@ static const char *optFind(zcm_url_opts_t *opts, const string& key)
 static zcm_trans_t *createUdpm(zcm_url_t *url)
 {
     auto *ip = zcm_url_address(url);
-    vector<string> parts = split(ip, ':');
+    vector<string> parts = StringUtil::split(ip, ':');
     if (parts.size() != 2) {
         ZCM_DEBUG("ERROR: Url format is <ip-address>:<port-num>");
         return nullptr;

@@ -12,7 +12,7 @@ extern "C" {
 struct zcm_sub_t
 {
     zchar_t channel[ZCM_CHANNEL_MAXLEN + 1];
-    bool regex;
+    zbool_t regex;
     void *regexobj;
     zcm_msg_handler_t callback;
     void *usr;

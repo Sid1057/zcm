@@ -43,7 +43,7 @@ zbool_t cb_init(circBuffer_t* cb, zuint32_t sz)
 
 void cb_deinit(circBuffer_t* cb)
 {
-    free(cb->data);
+    zcm_free(cb->data);
     cb->data = NULL;
     cb->capacity = 0;
 }
@@ -269,7 +269,7 @@ zcm_retcode_t serial_recvmsg_enable(zcm_trans_generic_serial_t *zt,
     return ZCM_EOK;
 }
 
-zcm_retcode_t serial_recvmsg(zcm_trans_generic_serial_t *zt, zcm_msg_t *msg, zuint32_t timeout)
+zcm_retcode_t serial_recvmsg(zcm_trans_generic_serial_t *zt, zcm_msg_t *msg, zint32_t timeout)
 {
     zuint64_t utime = zt->time(zt->time_usr);
     zuint32_t incomingSize = cb_size(&zt->recvBuffer);
@@ -389,7 +389,7 @@ static zcm_retcode_t _serial_sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
 static zcm_retcode_t _serial_recvmsg_enable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
 { return serial_recvmsg_enable(cast(zt), channel, enable); }
 
-static zcm_retcode_t _serial_recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zuint32_t timeout)
+static zcm_retcode_t _serial_recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zint32_t timeout)
 { return serial_recvmsg(cast(zt), msg, timeout); }
 
 static zcm_retcode_t _serial_update(zcm_trans_t *zt)
@@ -429,21 +429,21 @@ zcm_trans_t *zcm_trans_generic_serial_create(
     zt->mtu = MTU;
     zt->recvMsgData = zcm_malloc(zt->mtu * sizeof(zuint8_t));
     if (zt->recvMsgData == NULL) {
-        free(zt);
+        zcm_free(zt);
         return NULL;
     }
 
     zt->trans.trans_type = ZCM_NONBLOCKING;
     zt->trans.vtbl = &methods;
     if (!cb_init(&zt->sendBuffer, bufSize)) {
-        free(zt->recvMsgData);
-        free(zt);
+        zcm_free(zt->recvMsgData);
+        zcm_free(zt);
         return NULL;
     }
     if (!cb_init(&zt->recvBuffer, bufSize)) {
         cb_deinit(&zt->sendBuffer);
-        free(zt->recvMsgData);
-        free(zt);
+        zcm_free(zt->recvMsgData);
+        zcm_free(zt);
         return NULL;
     }
 
@@ -462,6 +462,6 @@ void zcm_trans_generic_serial_destroy(zcm_trans_t* _zt)
     zcm_trans_generic_serial_t *zt = cast(_zt);
     cb_deinit(&zt->recvBuffer);
     cb_deinit(&zt->sendBuffer);
-    free(zt->recvMsgData);
-    free(zt);
+    zcm_free(zt->recvMsgData);
+    zcm_free(zt);
 }

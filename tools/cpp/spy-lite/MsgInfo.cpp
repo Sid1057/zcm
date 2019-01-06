@@ -98,7 +98,7 @@ void MsgInfo::addMessage(u64 utime, const zcm_recv_buf_t *rbuf)
 
     /* decode the data */
     i64 hash = 0;
-    __int64_t_decode_array(rbuf->data, 0, rbuf->data_size, &hash, 1);
+    __zint64_t_decode_array(rbuf->data, 0, rbuf->data_size, &hash, 1);
     ensureHash(hash);
 
     if (metadata) {

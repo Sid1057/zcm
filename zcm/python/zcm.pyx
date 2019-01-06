@@ -1,73 +1,85 @@
-from libc.stdint cimport int64_t, int32_t, uint32_t, uint8_t
+from libc.stdint cimport uint64_t, int64_t, int32_t, uint32_t, uint8_t
 from posix.unistd cimport off_t
 import time
 
 cdef extern from "Python.h":
     void PyEval_InitThreads()
 
+cdef extern from "zcm/zcm_base_types.h":
+    ctypedef  uint8_t    zbool_t
+    ctypedef     char    zchar_t
+    ctypedef  uint8_t   zuint8_t
+    ctypedef uint32_t  zuint32_t
+    ctypedef uint64_t  zuint64_t
+    ctypedef    off_t     zoff_t
+
 cdef extern from "zcm/zcm.h":
     cdef enum zcm_return_codes:
-        ZCM_EOK,
-        ZCM_EINVALID,
-        ZCM_EAGAIN,
-        ZCM_ECONNECT,
-        ZCM_EINTR,
-        ZCM_EUNKNOWN,
-        ZCM_NUM_RETURN_CODES
+        ZCM_EOK
+        pass
+    ctypedef zcm_return_codes zcm_retcode_t
+
     ctypedef struct zcm_t:
         pass
+
     ctypedef struct zcm_sub_t:
         pass
-    ctypedef struct zcm_recv_buf_t:
-        uint8_t* data
-        uint32_t data_size
-        pass
-    ctypedef void (*zcm_msg_handler_t)(const zcm_recv_buf_t* rbuf, const char* channel, void* usr)
 
-    zcm_t* zcm_create (const char* url)
+    ctypedef struct zcm_recv_buf_t:
+        zuint8_t* data
+        zuint32_t data_size
+        pass
+
+    ctypedef void (*zcm_msg_handler_t)(const zcm_recv_buf_t* rbuf, const zchar_t* channel, void* usr)
+
+    zcm_t* zcm_create (const zchar_t* url)
     void   zcm_destroy(zcm_t* zcm)
 
-    int         zcm_errno   (zcm_t* zcm)
-    const char* zcm_strerror(zcm_t* zcm)
-    const char* zcm_strerrno(int err)
+    zcm_retcode_t  zcm_errno   (zcm_t* zcm)
+    const zchar_t* zcm_strerror(zcm_t* zcm)
+    const zchar_t* zcm_strerrno(zcm_retcode_t err)
 
-    zcm_sub_t* zcm_try_subscribe  (zcm_t* zcm, const char* channel, zcm_msg_handler_t cb, void* usr)
-    int        zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
+    zcm_sub_t*     zcm_try_subscribe  (zcm_t* zcm, const zchar_t* channel,
+                                       zcm_msg_handler_t cb, void* usr)
+    zcm_retcode_t  zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
 
-    int  zcm_publish(zcm_t* zcm, const char* channel, const uint8_t* data, uint32_t dlen)
+    zcm_retcode_t  zcm_publish(zcm_t* zcm, const zchar_t* channel,
+                               const zuint8_t* data, zuint32_t dlen)
 
-    int  zcm_try_flush         (zcm_t* zcm)
+    zcm_retcode_t  zcm_try_flush         (zcm_t* zcm)
 
-    void zcm_run               (zcm_t* zcm)
-    void zcm_start             (zcm_t* zcm)
-    int  zcm_try_stop          (zcm_t* zcm)
-    void zcm_pause             (zcm_t* zcm)
-    void zcm_resume            (zcm_t* zcm)
-    int  zcm_handle            (zcm_t* zcm)
-    int  zcm_try_set_queue_size(zcm_t* zcm, uint32_t numMsgs)
+    void          zcm_run               (zcm_t* zcm)
+    void          zcm_start             (zcm_t* zcm)
+    zcm_retcode_t zcm_try_stop          (zcm_t* zcm)
+    void          zcm_pause             (zcm_t* zcm)
+    void          zcm_resume            (zcm_t* zcm)
+    zcm_retcode_t zcm_handle            (zcm_t* zcm)
+    zcm_retcode_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs)
 
-    int  zcm_handle_nonblock(zcm_t* zcm)
+    zcm_retcode_t  zcm_handle_nonblock(zcm_t* zcm)
 
     ctypedef struct zcm_eventlog_t:
         pass
-    ctypedef struct zcm_eventlog_event_t:
-        int64_t  eventnum
-        int64_t  timestamp
-        int32_t  channellen
-        int32_t  datalen
-        char*    channel
-        uint8_t* data
 
-    zcm_eventlog_t* zcm_eventlog_create(const char* path, const char* mode)
+    ctypedef struct zcm_eventlog_event_t:
+        zuint64_t  eventnum
+        zuint64_t  timestamp
+        zuint32_t  channellen
+        zuint32_t  datalen
+        zchar_t*  channel
+        zuint8_t*  data
+
+    zcm_eventlog_t* zcm_eventlog_create(const zchar_t* path, const zchar_t* mode)
     void            zcm_eventlog_destroy(zcm_eventlog_t* eventlog)
 
-    int zcm_eventlog_seek_to_timestamp(zcm_eventlog_t* eventlog, int64_t ts)
+    zcm_retcode_t zcm_eventlog_seek_to_timestamp(zcm_eventlog_t* eventlog, zuint64_t ts)
 
     zcm_eventlog_event_t* zcm_eventlog_read_next_event(zcm_eventlog_t* eventlog)
     zcm_eventlog_event_t* zcm_eventlog_read_prev_event(zcm_eventlog_t* eventlog)
-    zcm_eventlog_event_t* zcm_eventlog_read_event_at_offset(zcm_eventlog_t* eventlog, off_t offset)
+    zcm_eventlog_event_t* zcm_eventlog_read_event_at_offset(zcm_eventlog_t* eventlog,
+                                                            zoff_t offset)
     void                  zcm_eventlog_free_event(zcm_eventlog_event_t* event)
-    int                   zcm_eventlog_write_event(zcm_eventlog_t* eventlog, \
+    zbool_t               zcm_eventlog_write_event(zcm_eventlog_t* eventlog, \
                                                    const zcm_eventlog_event_t* event)
 
 cdef class ZCMSubscription:
@@ -75,12 +87,12 @@ cdef class ZCMSubscription:
     cdef object handler
     cdef object msgtype
 
-cdef void handler_cb(const zcm_recv_buf_t* rbuf, const char* channel, void* usr) with gil:
+cdef void handler_cb(const zcm_recv_buf_t* rbuf, const zchar_t* channel, void* usr) with gil:
     subs = (<ZCMSubscription>usr)
     msg = subs.msgtype.decode(rbuf.data[:rbuf.data_size])
     subs.handler(channel.decode('utf-8'), msg)
 
-cdef void handler_cb_raw(const zcm_recv_buf_t* rbuf, const char* channel, void* usr) with gil:
+cdef void handler_cb_raw(const zcm_recv_buf_t* rbuf, const zchar_t* channel, void* usr) with gil:
     subs = (<ZCMSubscription>usr)
     subs.handler(channel.decode('utf-8'), rbuf.data[:rbuf.data_size])
 
@@ -132,8 +144,8 @@ cdef class ZCM:
         self.subscriptions.remove(subs)
     def publish(self, str channel, object msg):
         _data = msg.encode()
-        cdef const uint8_t* data = _data
-        return zcm_publish(self.zcm, channel.encode('utf-8'), data, len(_data) * sizeof(uint8_t))
+        cdef const zuint8_t* data = _data
+        return zcm_publish(self.zcm, channel.encode('utf-8'), data, len(_data) * sizeof(zuint8_t))
     def flush(self):
         while zcm_try_flush(self.zcm) != ZCM_EOK:
             time.sleep(0) # yield the gil
@@ -157,17 +169,17 @@ cdef class ZCM:
         return zcm_handle_nonblock(self.zcm)
 
 cdef class LogEvent:
-    cdef int64_t eventnum
-    cdef int64_t timestamp
+    cdef zuint64_t eventnum
+    cdef zuint64_t timestamp
     cdef object  channel
     cdef object  data
     def __cinit__(self):
         pass
-    def setEventnum(self, int64_t eventnum):
+    def setEventnum(self, zuint64_t eventnum):
         self.eventnum = eventnum
     def getEventnum(self):
         return self.eventnum
-    def setTimestamp(self, int64_t time):
+    def setTimestamp(self, zuint64_t time):
         self.timestamp = time
     def getTimestamp(self):
         return self.timestamp
@@ -197,7 +209,7 @@ cdef class LogFile:
             self.lastevent = NULL
     def good(self):
         return self.eventlog != NULL
-    def seekToTimestamp(self, int64_t timestamp):
+    def seekToTimestamp(self, zuint64_t timestamp):
         return zcm_eventlog_seek_to_timestamp(self.eventlog, timestamp)
     cdef __setCurrentEvent(self, zcm_eventlog_event_t* evt):
         if self.lastevent != NULL:
@@ -209,7 +221,7 @@ cdef class LogFile:
         curEvent.eventnum = evt.eventnum
         curEvent.setChannel   (evt.channel[:evt.channellen].decode('utf-8'))
         curEvent.setTimestamp (evt.timestamp)
-        curEvent.setData      ((<uint8_t*>evt.data)[:evt.datalen])
+        curEvent.setData      ((<zuint8_t*>evt.data)[:evt.datalen])
         return curEvent
     def readNextEvent(self):
         cdef zcm_eventlog_event_t* evt = zcm_eventlog_read_next_event(self.eventlog)
@@ -226,6 +238,6 @@ cdef class LogFile:
         evt.timestamp  = event.timestamp
         evt.channellen = len(event.channel)
         evt.datalen    = len(event.data)
-        evt.channel    = <char*> event.channel
-        evt.data       = <uint8_t*> event.data
+        evt.channel    = <zchar_t*> event.channel
+        evt.data       = <zuint8_t*> event.data
         return zcm_eventlog_write_event(self.eventlog, &evt);

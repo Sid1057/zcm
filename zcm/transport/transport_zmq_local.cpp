@@ -392,7 +392,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                     assert(rc > 0);
                     zuint32_t sz = (zuint32_t) rc;
                     assert(sz < MTU && "Received message that is bigger than a legally-published message could be");
-                    if (sz > (int)recvmsgBufferSize) {
+                    if (sz > recvmsgBufferSize) {
                         ZCM_DEBUG("Reallocating recv buffer to handle larger messages. Size is now %d", rc);
                         recvmsgBufferSize = sz * 2;
                         delete[] recvmsgBuffer;
@@ -439,7 +439,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     static zcm_retcode_t _recvmsgEnable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
     { return cast(zt)->recvmsgEnable(channel, enable); }
 
-    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zuint32_t timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zint32_t timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
     static void _destroy(zcm_trans_t *zt)

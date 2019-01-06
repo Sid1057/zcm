@@ -16,17 +16,6 @@ extern "C" {
 #define  ZCM_CORETYPES_FLOAT_NUM_BYTES_ON_BUS (4)
 #define ZCM_CORETYPES_DOUBLE_NUM_BYTES_ON_BUS (8)
 
-static inline void *zcm_malloc(zuint32_t sz)
-{
-    if (!sz) return;
-    return malloc(sz);
-}
-
-static inline void zcm_free(void* mem)
-{
-    free(mem);
-}
-
 typedef struct ___zcm_hash_ptr __zcm_hash_ptr;
 struct ___zcm_hash_ptr
 {
@@ -457,7 +446,7 @@ static inline zuint32_t __zint64_t_clone_array(const zint64_t *p, zint64_t *q, z
  */
 typedef union __zcm__zfloat32_zuint32_t {
     zfloat32_t zflt32;
-    zuint32_t zuint;
+    zuint32_t zuint32;
 } __zcm__zfloat32_zuint32_t;
 
 #define __zfloat32_t_hash_recursive(p) 0
@@ -475,7 +464,7 @@ static inline zint32_t __zfloat32_t_encode_array(void *_buf, zuint32_t offset, z
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat32_uint32_t tmp;
+    __zcm__zfloat32_zuint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -496,7 +485,7 @@ static inline zint32_t __zfloat32_t_decode_array(const void *_buf, zuint32_t off
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat32_uint32_t tmp;
+    __zcm__zfloat32_zuint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -518,7 +507,7 @@ static inline zint32_t __zfloat32_t_encode_little_endian_array(void *_buf, zuint
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat32_uint32_t tmp;
+    __zcm__zfloat32_zuint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -539,7 +528,7 @@ static inline zint32_t __zfloat32_t_decode_little_endian_array(const void *_buf,
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat32_uint32_t tmp;
+    __zcm__zfloat32_zuint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -567,7 +556,7 @@ static inline zuint32_t __zfloat32_t_clone_array(const zfloat32_t *p, zfloat32_t
  */
 typedef union __zcm__zfloat64_zuint64_t {
     zfloat64_t zfloat64;
-    Zuint64_t zuint64;
+    zuint64_t zuint64;
 } __zcm__zfloat64_zuint64_t;
 
 #define __zfloat64_t_hash_recursive(p) 0
@@ -585,7 +574,7 @@ static inline zint32_t __zfloat64_t_encode_array(void *_buf, zuint32_t offset, z
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat64_t_uint64_t tmp;
+    __zcm__zfloat64_zuint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -610,7 +599,7 @@ static inline zint32_t __zfloat64_t_decode_array(const void *_buf, zuint32_t off
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat64_t_uint64_t tmp;
+    __zcm__zfloat64_zuint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -638,7 +627,7 @@ static inline zint32_t __zfloat64_t_encode_little_endian_array(void *_buf, zuint
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat64_t_uint64_t tmp;
+    __zcm__zfloat64_zuint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -663,7 +652,7 @@ static inline zint32_t __zfloat64_t_decode_little_endian_array(const void *_buf,
     zuint8_t *buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __zcm__zfloat64_t_uint64_t tmp;
+    __zcm__zfloat64_zuint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -701,7 +690,7 @@ static inline void __zstring_t_decode_array_cleanup(char **s, zuint32_t elements
 {
     zuint32_t element;
     for (element = 0; element < elements; ++element)
-        free(s[element]);
+        zcm_free(s[element]);
 }
 
 static inline zuint32_t __zstring_t_encoded_array_size(const zchar_t * const *s, zuint32_t elements)
@@ -824,8 +813,8 @@ typedef enum {
     ZCM_FIELD_ZFLOAT32_T,
     ZCM_FIELD_ZFLOAT64_T,
     ZCM_FIELD_ZSTRING_T,
-    ZCM_FIELD_ZBOOLEAN,
-    ZCM_FIELD_USER_TYPE
+    ZCM_FIELD_ZBOOL_T,
+    ZCM_FIELD_USER_T
 } zcm_field_type_t;
 
 #define ZCM_TYPE_FIELD_MAX_DIM 50

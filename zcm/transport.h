@@ -219,7 +219,7 @@ struct zcm_trans_methods_t
 {
     zuint32_t      (*get_mtu)(zcm_trans_t* zt);
     zcm_retcode_t (*sendmsg)(zcm_trans_t* zt, zcm_msg_t msg);
-    zcm_retcode_t (*recvmsg_enable)(zcm_trans_t* zt, const char* channel, bool enable);
+    zcm_retcode_t (*recvmsg_enable)(zcm_trans_t* zt, const zchar_t* channel, zbool_t enable);
     zcm_retcode_t (*recvmsg)(zcm_trans_t* zt, zcm_msg_t* msg, zint32_t timeout);
     zcm_retcode_t (*update)(zcm_trans_t* zt);
     void          (*destroy)(zcm_trans_t* zt);
@@ -235,7 +235,7 @@ zcm_trans_sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
 { return zt->vtbl->sendmsg(zt, msg); }
 
 static INLINE zcm_retcode_t
-zcm_trans_recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
+zcm_trans_recvmsg_enable(zcm_trans_t* zt, const zchar_t* channel, zbool_t enable)
 { return zt->vtbl->recvmsg_enable(zt, channel, enable); }
 
 static INLINE zcm_retcode_t
