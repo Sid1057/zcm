@@ -61,6 +61,8 @@ int main(int argc, char *argv[])
     my_data.name = "example string";
     my_data.enabled = true;
 
+    zcm.start();
+
     while (1) {
         zcm.publish(CHANNEL, &my_data);
         zcm.publish("FOOBAR", &my_data);

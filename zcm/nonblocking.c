@@ -133,6 +133,9 @@ zcm_retcode_t zcm_nonblocking_unsubscribe(zcm_nonblocking_t* zcm, zcm_sub_t* sub
     zint32_t match_idx = sub - zcm->subs;
     zint32_t num_chan_matches = 0;
     zcm_retcode_t rc = ZCM_EOK;
+
+    if (match_idx < 0 || match_idx >= zcm->subInUseEnd) return ZCM_EINVALID;
+
     for (i = 0; i < zcm->subInUseEnd; ++i) {
         if (!zcm->subInUse[i]) continue;
         /* Note: it would be nice if we didn't have to do a string comp to unsubscribe, but
@@ -143,8 +146,6 @@ zcm_retcode_t zcm_nonblocking_unsubscribe(zcm_nonblocking_t* zcm, zcm_sub_t* sub
             ++num_chan_matches;
         }
     }
-
-    if (match_idx <= 0 || match_idx >= zcm->subInUseEnd) return ZCM_EINVALID;
 
     zcm->subInUse[match_idx] = zfalse;
 
