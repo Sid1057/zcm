@@ -54,9 +54,15 @@ static string makeArraySize(const ZCMMember& zm, const string& n, size_t dim)
 // Some types do not have a 1:1 mapping from zcm types to native C storage types.
 static string mapTypeName(const string& t)
 {
-    if (t == "boolean") return "int8_t";
-    if (t == "string")  return "char*";
-    if (t == "byte")    return "uint8_t";
+    if      (t == "int8_t")  return "zint8_t";
+    else if (t == "int16_t") return "zint16_t";
+    else if (t == "int32_t") return "zint32_t";
+    else if (t == "int64_t") return "zint64_t";
+    else if (t == "byte")    return "zbyte_t";
+    else if (t == "float")   return "zfloat32_t";
+    else if (t == "double")  return "zfloat64_t";
+    else if (t == "string")  return "zchar_t*";
+    else if (t == "boolean") return "zbool_t";
 
     return StringUtil::dotsToUnderscores(t);
 }

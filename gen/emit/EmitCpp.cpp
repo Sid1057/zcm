@@ -57,16 +57,22 @@ static bool isDimSizeFixed(const string& dimSize)
 // storage types.
 static string mapTypeName(const string& t)
 {
-    if (t == "boolean")  return "int8_t";
-    if (t == "string")   return "std::string";
-    if (t == "byte")     return "uint8_t";
+    if      (t == "int8_t")  return "zint8_t";
+    else if (t == "int16_t") return "zint16_t";
+    else if (t == "int32_t") return "zint32_t";
+    else if (t == "int64_t") return "zint64_t";
+    else if (t == "byte")    return "zbyte_t";
+    else if (t == "float")   return "zfloat32_t";
+    else if (t == "double")  return "zfloat64_t";
+    else if (t == "string")  return "std::string";
+    else if (t == "boolean") return "zbool_t";
     return dotsToDoubleColons(t);
 }
 
 void setupOptionsCpp(GetOpt& gopt)
 {
-    gopt.addString(0, "cpp-hpath",    ".",      "Location for .hpp files");
-    gopt.addString(0, "cpp-include",   "",       "Generated #include lines reference this folder");
+    gopt.addString(0, "cpp-hpath",  ".", "Location for .hpp files");
+    gopt.addString(0, "cpp-include", "", "Generated #include lines reference this folder");
 }
 
 struct Emit : public Emitter

@@ -13,8 +13,8 @@ static void print_value_scalar(TypeDb& db, zcm_field_t *field, void *data, int *
 
     switch(field->type) {
 
-        case ZCM_FIELD_ZBYTE_T:
-        case ZCM_FIELD_ZINT8_T: {
+        case ZCM_FIELD_BYTE:
+        case ZCM_FIELD_INT8_T: {
             int8_t i = *(int8_t *) data;
             printf(" %d", i);
             if(is_ascii(i))
@@ -22,35 +22,35 @@ static void print_value_scalar(TypeDb& db, zcm_field_t *field, void *data, int *
             break;
         }
 
-        case ZCM_FIELD_ZINT16_T:
+        case ZCM_FIELD_INT16_T:
             printf("% d", *(int16_t *) data);
             break;
 
-        case ZCM_FIELD_ZINT32_T:
+        case ZCM_FIELD_INT32_T:
             printf("% d", *(int32_t *) data);
             break;
 
-        case ZCM_FIELD_ZINT64_T:
+        case ZCM_FIELD_INT64_T:
             printf("% " PRIi64 "", *(int64_t *) data);
             break;
 
-        case ZCM_FIELD_ZFLOAT32_T:
+        case ZCM_FIELD_FLOAT:
             printf("% f", *(float *) data);
             break;
 
-        case ZCM_FIELD_ZFLOAT64_T:
+        case ZCM_FIELD_DOUBLE:
             printf("% f", *(double *) data);
             break;
 
-        case ZCM_FIELD_ZSTRING_T:
+        case ZCM_FIELD_STRING:
             printf("\"%s\"", *(const char **) data);
             break;
 
-        case ZCM_FIELD_ZBOOL_T:
+        case ZCM_FIELD_BOOLEAN:
             printf("%s", (*(int8_t*) data) == 1 ? "true" : "false");
             break;
 
-        case ZCM_FIELD_USER_T: {
+        case ZCM_FIELD_USER_TYPE: {
             if (db.getByName(StringUtil::dotsToUnderscores(field->typestr))) {
                 if(usertype_count == NULL) {
                     printf("<USER>");
@@ -74,17 +74,17 @@ static void print_value_scalar(TypeDb& db, zcm_field_t *field, void *data, int *
 static size_t typesize(zcm_field_type_t type)
 {
     switch(type) {
-        case ZCM_FIELD_ZINT8_T:    return sizeof(int8_t);
-        case ZCM_FIELD_ZINT16_T:   return sizeof(int16_t);
-        case ZCM_FIELD_ZINT32_T:   return sizeof(int32_t);
-        case ZCM_FIELD_ZINT64_T:   return sizeof(int64_t);
-        case ZCM_FIELD_ZBYTE_T:    return sizeof(int8_t);
-        case ZCM_FIELD_ZFLOAT32_T: return sizeof(float);
-        case ZCM_FIELD_ZFLOAT64_T: return sizeof(double);
-        case ZCM_FIELD_ZSTRING_T:  return sizeof(const char *);
-        case ZCM_FIELD_ZBOOL_T:    return sizeof(int8_t);
+        case ZCM_FIELD_INT8_T:   return sizeof(int8_t);
+        case ZCM_FIELD_INT16_T:  return sizeof(int16_t);
+        case ZCM_FIELD_INT32_T:  return sizeof(int32_t);
+        case ZCM_FIELD_INT64_T:  return sizeof(int64_t);
+        case ZCM_FIELD_BYTE:     return sizeof(int8_t);
+        case ZCM_FIELD_FLOAT:    return sizeof(float);
+        case ZCM_FIELD_DOUBLE:   return sizeof(double);
+        case ZCM_FIELD_STRING:   return sizeof(const char *);
+        case ZCM_FIELD_BOOLEAN:  return sizeof(int8_t);
 
-        case ZCM_FIELD_USER_T:
+        case ZCM_FIELD_USER_TYPE:
         default:
             return 0;
     }
@@ -159,7 +159,7 @@ void msg_display(TypeDb& db, const TypeMetadata& metadata_, void *msg, const Msg
             typeinfo->get_field(msg, j, &field);
             inside_array = 0;
 
-            if(field.type == ZCM_FIELD_USER_T) {
+            if(field.type == ZCM_FIELD_USER_TYPE) {
 
                 // two possiblities here: 1) scalar or 2) array
 

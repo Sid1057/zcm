@@ -248,7 +248,7 @@ struct Bridge
             if (!plugins.empty()) {
 
                 int64_t msg_hash;
-                __zint64_t_decode_array(le.data, 0, 8, &msg_hash, 1);
+                __int64_t_decode_array(le.data, 0, 8, &msg_hash, 1);
 
                 for (auto& p : plugins) {
                     vector<const zcm::LogEvent*> pevts =

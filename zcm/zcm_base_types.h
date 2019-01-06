@@ -15,7 +15,7 @@
 
 #define ZCM_BASE_TYPES \
     X( uint8_t,    zbyte_t) /* Must be at least  8 bits long */ \
-    X( uint8_t,    zbool_t) /* Must be at least  8 bits long */ \
+    X(  int8_t,    zbool_t) /* Must be at least  8 bits long */ \
     /* zchar_t must be compatible with all str functions in string.h */ \
     X(    char,    zchar_t) /* Must be at least  8 bits long */ \
     X( uint8_t,   zuint8_t) /* Must be at least  8 bits long */ \

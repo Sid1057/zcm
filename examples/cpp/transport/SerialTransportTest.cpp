@@ -17,14 +17,14 @@ using namespace zcm;
 
 #define MAX_FIFO 12
 
-queue<uint8_t> fifo;
+queue<zuint8_t> fifo;
 
-static size_t get(uint8_t* data, size_t nData, void* usr)
+static zuint32_t get(zuint8_t* data, zuint32_t nData, void* usr)
 {
-    size_t n = MIN(MAX_FIFO, nData);
+    zuint32_t n = MIN(MAX_FIFO, nData);
     n = MIN(fifo.size(), n);
 
-    for (size_t i = 0; i < n; ++i) {
+    for (zuint32_t i = 0; i < n; ++i) {
         data[i] = fifo.front();
         fifo.pop();
     }
@@ -32,12 +32,12 @@ static size_t get(uint8_t* data, size_t nData, void* usr)
     return n;
 }
 
-static size_t put(const uint8_t* data, size_t nData, void* usr)
+static zuint32_t put(const zuint8_t* data, zuint32_t nData, void* usr)
 {
-    size_t n = MIN(MAX_FIFO - fifo.size(), nData);
+    zuint32_t n = MIN(MAX_FIFO - fifo.size(), nData);
     //cout << "Put " << n << " bytes" << endl;
 
-    for (size_t i = 0; i < n; ++i)
+    for (zuint32_t i = 0; i < n; ++i)
         fifo.push(data[i]);
 
     return n;
