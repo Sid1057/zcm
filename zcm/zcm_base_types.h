@@ -3,8 +3,9 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
 #include <float.h>
+#include <string.h>
+#include <sys/types.h>
 
 #ifndef ZCM_EMBEDDED
 #include <assert.h>
@@ -31,7 +32,15 @@
     X(  size_t,    zsize_t) /* Must have a size no less than the datatype returned by sizeof */ \
     X( ssize_t,   zssize_t) /* Must have a size equal to zsize_t */ \
     X(     int,     zint_t) \
-    X(  string,  zstring_t) /* Must be a string of zchar_t   */ \
+    X(unsigned,    zuint_t) \
+
+#ifdef __cplusplus
+#include <string>
+#define ZCM_BASE_TYPES_CPP \
+    X(std::string, zstring_t) /* Must be a string of zchar_t */
+#else
+#define ZCM_BASE_TYPES_CPP
+#endif
 
 #ifndef ZCM_EMBEDDED
 #define ZCM_BASE_TYPES_NO_EMBEDDED \
@@ -63,6 +72,7 @@
 #define X(NATIVE_TYPE, ZCM_BASE_TYPE) \
     typedef NATIVE_TYPE ZCM_BASE_TYPE;
 ZCM_BASE_TYPES
+ZCM_BASE_TYPES_CPP
 ZCM_BASE_TYPES_NO_EMBEDDED
 #undef X
 

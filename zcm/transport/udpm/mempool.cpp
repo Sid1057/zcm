@@ -11,7 +11,7 @@ MemPool::MemPool()
 
 MemPool::~MemPool()
 {
-    for (size_t i = 0; i < NUMLISTS; i++) {
+    for (zsize_t i = 0; i < NUMLISTS; i++) {
         Block *blk = sizelists[i];
         while (blk) {
             auto *next = blk->next;
@@ -21,36 +21,36 @@ MemPool::~MemPool()
     }
 }
 
-static bool fitsInU32(size_t v)
+static bool fitsInU32(zsize_t v)
 {
     return (v & 0xffffffff) == v;
 }
 
-static int computeSlot(size_t v)
+static zint_t computeSlot(zsize_t v)
 {
     // Note: Only works on 32-bit and 64-bit systems
-    assert(sizeof(unsigned) == 4 && CHAR_BIT == 8);
+    assert(sizeof(zuint_t) == 4 && CHAR_BIT == 8);
     assert(fitsInU32(v));
-    size_t bits = 31 - __builtin_clz((u32)v);
-    if ((size_t)(1<<bits) != v)
+    zsize_t bits = 31 - __builtin_clz((zu32)v);
+    if ((zsize_t)(1<<bits) != v)
         bits += 1;
-    assert((size_t)(1<<(bits-1)) < v && v <= (size_t)(1<<bits));
-    bits = std::max(bits, (size_t)16);
+    assert((zsize_t)(1<<(bits-1)) < v && v <= (zsize_t)(1<<bits));
+    bits = std::max(bits, (zsize_t)16);
     return bits - 16;
 }
 
-static size_t slotToSize(int slot)
+static zsize_t slotToSize(zint_t slot)
 {
     return 1 << (slot+16);
 }
 
-char *MemPool::alloc(size_t sz)
+char *MemPool::alloc(zsize_t sz)
 {
     // This allocator only goes up to 2^28
     assert(sz <= (1<<28));
     assert(fitsInU32(sz));
-    int slot = computeSlot(sz);
-    assert(0 <= slot && slot < (int)NUMLISTS);
+    zint_t slot = computeSlot(sz);
+    assert(0 <= slot && slot < (zint_t)NUMLISTS);
 
     Block *mem = sizelists[slot];
     if (mem) {
@@ -61,13 +61,13 @@ char *MemPool::alloc(size_t sz)
     }
 }
 
-void MemPool::free(char *mem, size_t sz)
+void MemPool::free(char *mem, zsize_t sz)
 {
     // This allocator only goes up to 2^28
     assert(sz <= (1<<28));
     assert(fitsInU32(sz));
-    int slot = computeSlot(sz);
-    assert(0 <= slot && slot < (int)NUMLISTS);
+    zint_t slot = computeSlot(sz);
+    assert(0 <= slot && slot < (zint_t)NUMLISTS);
 
     Block *newblock = (Block*)mem;
     newblock->next = sizelists[slot];

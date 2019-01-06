@@ -12,7 +12,7 @@ bool FragBuf::matchesSockaddr(struct sockaddr_in *addr)
     return sockaddrEqual(&from, addr);
 }
 
-MessagePool::MessagePool(size_t maxSize, size_t maxBuffers)
+MessagePool::MessagePool(zsize_t maxSize, zsize_t maxBuffers)
     : maxSize(maxSize), maxBuffers(maxBuffers)
 {
 }
@@ -21,7 +21,7 @@ MessagePool::~MessagePool()
 {
 }
 
-Buffer MessagePool::allocBuffer(size_t sz)
+Buffer MessagePool::allocBuffer(zsize_t sz)
 {
     Buffer buf;
     buf.data = mempool.alloc(sz);
@@ -45,7 +45,7 @@ void MessagePool::moveBuffer(Buffer& to, Buffer& from)
     from.data = NULL;
 }
 
-Packet *MessagePool::allocPacket(size_t maxsz)
+Packet *MessagePool::allocPacket(zsize_t maxsz)
 {
     Packet *p = new (mempool.alloc<Packet>()) Packet{};
     p->buf = this->allocBuffer(maxsz);
@@ -82,7 +82,7 @@ void MessagePool::freeMessage(Message *b)
 }
 
 
-FragBuf *MessagePool::addFragBuf(u32 data_size)
+FragBuf *MessagePool::addFragBuf(zu32 data_size)
 {
     FragBuf *fbuf = new (mempool.alloc<FragBuf>()) FragBuf{};
     fbuf->buf = this->allocBuffer(data_size);
@@ -91,7 +91,7 @@ FragBuf *MessagePool::addFragBuf(u32 data_size)
         // find and remove the least recently updated fragment buffer
         int idx = -1;
         FragBuf *eldest = nullptr;
-        for (size_t i = 0; i < fragbufs.size(); i++) {
+        for (zsize_t i = 0; i < fragbufs.size(); i++) {
             FragBuf *f = fragbufs[i];
             if (idx == -1 || f->last_packet_utime < eldest->last_packet_utime) {
                 idx = (int)i;
@@ -99,7 +99,7 @@ FragBuf *MessagePool::addFragBuf(u32 data_size)
             }
         }
         if (eldest) {
-            _removeFragBuf((size_t)idx);
+            _removeFragBuf((zsize_t)idx);
             // XXX Need to free the removed FragBuf*
         }
     }
@@ -118,7 +118,7 @@ FragBuf *MessagePool::lookupFragBuf(struct sockaddr_in *key)
     return nullptr;
 }
 
-void MessagePool::_removeFragBuf(size_t index)
+void MessagePool::_removeFragBuf(zsize_t index)
 {
     assert(index < fragbufs.size());
 
@@ -127,7 +127,7 @@ void MessagePool::_removeFragBuf(size_t index)
     totalSize -= fbuf->buf.size;
 
     // delete old element, move last element to this slot, and shrink by 1
-    size_t lastIdx = fragbufs.size()-1;
+    zsize_t lastIdx = fragbufs.size()-1;
     fragbufs[index] = fragbufs[lastIdx];
     fragbufs.pop_back();
 
@@ -139,7 +139,7 @@ void MessagePool::removeFragBuf(FragBuf *fbuf)
 {
     // NOTE: this is kinda slow...
     // Search for the fragbuf index
-    for (size_t idx = 0; idx < fragbufs.size(); idx++)
+    for (zsize_t idx = 0; idx < fragbufs.size(); idx++)
         if (fragbufs[idx] == fbuf)
             return this->_removeFragBuf(idx);
 

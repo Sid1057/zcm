@@ -341,7 +341,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         if (gst) zcm_trans_generic_serial_destroy(gst);
     }
 
-    <Plug>(multiple-cursors-apply)zbool_t good()
+    zbool_t good()
     {
         return ser.isOpen();
     }

@@ -26,7 +26,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     unordered_map<zstring_t, zstring_t> options;
 
     zstring_t mode = "r";
-    float64_t speed = 1.0;
+    zfloat64_t speed = 1.0;
 
     u64 lastMsgUtime = 0;
     u64 lastDispatchUtime = 0;

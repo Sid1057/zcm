@@ -10,8 +10,9 @@ extern "C" {
 
 /* Functions that create zcm_trans_t should conform to this type signature */
 typedef zcm_trans_t *(zcm_trans_create_func)(zcm_url_t *url);
-bool zcm_transport_register(const char *name, const char *desc, zcm_trans_create_func *creator);
-zcm_trans_create_func *zcm_transport_find(const char *name);
+zbool_t zcm_transport_register(const zchar_t *name, const zchar_t *desc,
+                               zcm_trans_create_func *creator);
+zcm_trans_create_func *zcm_transport_find(const zchar_t *name);
 void zcm_transport_help(FILE *f);
 
 /* TODO: consider adding function that returns the names of all registered transports */

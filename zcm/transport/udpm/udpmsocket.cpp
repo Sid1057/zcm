@@ -254,7 +254,7 @@ zint_t UDPMSocket::recvPacket(Packet *pkt)
     msg.msg_flags = 0;
 #endif
 
-    <Plug>(multiple-cursors-apply)zint_t ret = ::recvmsg(fd, &msg, 0);
+    zint_t ret = ::recvmsg(fd, &msg, 0);
     pkt->fromlen = msg.msg_namelen;
 
     zbool_t got_utime = false;
@@ -276,7 +276,7 @@ zint_t UDPMSocket::recvPacket(Packet *pkt)
     if (!got_utime) {
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        pkt->utime = (i64)tv.tv_sec * 1000000 + tv.tv_usec;
+        pkt->utime = (zi64)tv.tv_sec * 1000000 + tv.tv_usec;
     }
 
     return ret;

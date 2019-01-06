@@ -1,11 +1,11 @@
 #ifndef _ZCM_H
 #define _ZCM_H
 
+#include "zcm_base_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "zcm_base_types.h"
 
 #ifndef ZCM_EMBEDDED
 #include "eventlog.h"

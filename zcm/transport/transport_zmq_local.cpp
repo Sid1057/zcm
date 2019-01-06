@@ -117,7 +117,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         delete[] recvmsgBuffer;
     }
 
-    sztring _tgetAddress(const zstring_t& channel)
+    zstring_t getAddress(const zstring_t& channel)
     {
         switch (type) {
             case IPC:

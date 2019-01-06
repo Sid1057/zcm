@@ -1,14 +1,14 @@
 #ifndef _ZCM_EVENTLOG_H
 #define _ZCM_EVENTLOG_H
 
+#include "zcm/zcm_base_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdlib.h>
 #include <stdio.h>
-
-#include "zcm/zcm_base_types.h"
 
 /* Note: some language bindings depend on the specific memory layout
  *       of ZCM structures. If you change these, be sure to update

@@ -32,13 +32,13 @@ zbool_t cb_init(circBuffer_t* cb, zuint32_t sz)
     cb->capacity = sz;
     cb->front = 0;
     cb->back  = 0;
-    if (cb->capacity == 0) return false;
+    if (cb->capacity == 0) return zfalse;
     cb->data = zcm_malloc(cb->capacity * sizeof(zuint8_t));
     if (cb->data == NULL) {
         cb->capacity = 0;
-        return false;
+        return zfalse;
     }
-    return true;
+    return ztrue;
 }
 
 void cb_deinit(circBuffer_t* cb)

@@ -179,11 +179,11 @@
  *
  ******************************************************************************/
 
+#include "zcm/zcm.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "zcm/zcm.h"
 
 /* Only define inline for C99 builds or better */
 #if (__STDC_VERSION__ >= 199901L) || (__cplusplus)

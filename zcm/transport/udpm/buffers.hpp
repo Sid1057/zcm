@@ -11,26 +11,26 @@ struct MsgHeaderShort
   private:
     // NOTE: These are set to private only because they are in network format.
     //       Thus, they are not safe to access directly.
-    u32 magic;
-    u32 msg_seqno;
+    zu32 magic;
+    zu32 msg_seqno;
 
     // Converted data
   public:
-    u32  getMagic()         { return ntohl(magic); }
-    void setMagic(u32 v)    { magic = htonl(v); }
-    u32  getMsgSeqno()      { return ntohl(msg_seqno); }
-    void setMsgSeqno(u32 v) { msg_seqno = htonl(v); }
+    zu32  getMagic()         { return ntohl(magic); }
+    void setMagic(zu32 v)    { magic = htonl(v); }
+    zu32  getMsgSeqno()      { return ntohl(msg_seqno); }
+    void setMsgSeqno(zu32 v) { msg_seqno = htonl(v); }
 
     // Computed data
   public:
     // Note: Channel starts after the header
-    const char *getChannelPtr() { return (char*)(this+1); }
-    size_t getChannelLen() { return strlen(getChannelPtr()); }
+    const zchar_t *getChannelPtr() { return (zchar_t*)(this+1); }
+    zsize_t getChannelLen() { return strlen(getChannelPtr()); }
 
     // Note: Data starts after the channel and null
-    char *getDataPtr() { return (char*)getChannelPtr() + getChannelLen() + 1; }
-    size_t getDataOffset() { return sizeof(*this) + getChannelLen() + 1; }
-    size_t getDataLen(size_t pktsz) { return pktsz - getDataOffset(); }
+    zchar_t *getDataPtr() { return (zchar_t*)getChannelPtr() + getChannelLen() + 1; }
+    zsize_t getDataOffset() { return sizeof(*this) + getChannelLen() + 1; }
+    zsize_t getDataLen(zsize_t pktsz) { return pktsz - getDataOffset(); }
 };
 
 struct MsgHeaderLong
@@ -38,26 +38,26 @@ struct MsgHeaderLong
     // Layout
   // TODO: make this private
   //private:
-    u32 magic;
-    u32 msg_seqno;
-    u32 msg_size;
-    u32 fragment_offset;
-    u16 fragment_no;
-    u16 fragments_in_msg;
+    zu32 magic;
+    zu32 msg_seqno;
+    zu32 msg_size;
+    zu32 fragment_offset;
+    zu16 fragment_no;
+    zu16 fragments_in_msg;
 
     // Converted data
   public:
-    u32 getMagic()          { return ntohl(magic); }
-    u32 getMsgSeqno()       { return ntohl(msg_seqno); }
-    u32 getMsgSize()        { return ntohl(msg_size); }
-    u32 getFragmentOffset() { return ntohl(fragment_offset); }
-    u16 getFragmentNo()     { return ntohs(fragment_no); }
-    u16 getFragmentsInMsg() { return ntohs(fragments_in_msg); }
+    zu32 getMagic()          { return ntohl(magic); }
+    zu32 getMsgSeqno()       { return ntohl(msg_seqno); }
+    zu32 getMsgSize()        { return ntohl(msg_size); }
+    zu32 getFragmentOffset() { return ntohl(fragment_offset); }
+    zu16 getFragmentNo()     { return ntohs(fragment_no); }
+    zu16 getFragmentsInMsg() { return ntohs(fragments_in_msg); }
 
     // Computed data
   public:
-    u32 getFragmentSize(size_t pktsz) { return pktsz - sizeof(*this); }
-    char *getDataPtr() { return (char*)(this+1); }
+    zu32 getFragmentSize(zsize_t pktsz) { return pktsz - sizeof(*this); }
+    zchar_t *getDataPtr() { return (zchar_t*)(this+1); }
 };
 
 // if fragment_no == 0, then header is immediately followed by NULL-terminated
@@ -67,8 +67,8 @@ struct MsgHeaderLong
 /******************** message buffer **********************/
 struct Buffer
 {
-    char *data = nullptr;
-    size_t size = 0;
+    zchar_t *data = nullptr;
+    zsize_t size = 0;
 
     Buffer(){}
   private:
@@ -94,13 +94,13 @@ struct Buffer
 
 struct Message
 {
-    i64               utime;       // timestamp of first datagram receipt
+    zi64               utime;       // timestamp of first datagram receipt
 
-    const char       *channel;     // points into 'buf'
-    size_t            channellen;  // length of channel
+    const zchar_t     *channel;     // points into 'buf'
+    zsize_t            channellen;  // length of channel
 
-    char             *data;        // points into 'buf'
-    size_t            datalen;     // length of data
+    zchar_t           *data;        // points into 'buf'
+    zsize_t            datalen;     // length of data
 
     // Backing store buffer that contains the actual data
     Buffer buf;
@@ -110,8 +110,8 @@ struct Message
 
 struct Packet
 {
-    i64             utime;      // timestamp of first datagram receipt
-    size_t          sz;         // size received
+    zi64             utime;      // timestamp of first datagram receipt
+    zsize_t          sz;         // size received
 
     struct sockaddr from;       // sender
     socklen_t       fromlen;
@@ -127,13 +127,13 @@ struct Packet
 /******************** fragment buffer **********************/
 struct FragBuf
 {
-    i64     last_packet_utime;
-    u32     msg_seqno;
-    u16     fragments_remaining;
+    zi64     last_packet_utime;
+    zu32     msg_seqno;
+    zu16     fragments_remaining;
 
     // The channel starts at the beginning of the buffer. The data
     // follows immediately after the channel and its NULL
-    size_t  channellen;
+    zsize_t  channellen;
     struct sockaddr_in from;
 
     // Fields set by the allocator object
@@ -145,15 +145,15 @@ struct FragBuf
 /************** A pool to handle every alloc/dealloc operation on Message objects ******/
 struct MessagePool
 {
-    MessagePool(size_t maxSize, size_t maxBuffers);
+    MessagePool(zsize_t maxSize, zsize_t maxBuffers);
     ~MessagePool();
 
     // Buffer
-    Buffer allocBuffer(size_t sz);
+    Buffer allocBuffer(zsize_t sz);
     void freeBuffer(Buffer& buf);
 
     // Packet
-    Packet *allocPacket(size_t maxsz);
+    Packet *allocPacket(zsize_t maxsz);
     void freePacket(Packet *p);
 
     // Message
@@ -162,7 +162,7 @@ struct MessagePool
     void freeMessage(Message *b);
 
     // FragBuf
-    FragBuf *addFragBuf(u32 data_size);
+    FragBuf *addFragBuf(zu32 data_size);
     FragBuf *lookupFragBuf(struct sockaddr_in *key);
     void removeFragBuf(FragBuf *fbuf);
 
@@ -171,12 +171,12 @@ struct MessagePool
 
   private:
     void _freeMessageBuffer(Message *b);
-    void _removeFragBuf(size_t index);
+    void _removeFragBuf(zsize_t index);
 
   private:
     MemPool mempool;
     vector<FragBuf*> fragbufs;
-    size_t maxSize;
-    size_t maxBuffers;
-    size_t totalSize = 0;
+    zsize_t maxSize;
+    zsize_t maxBuffers;
+    zsize_t totalSize = 0;
 };
