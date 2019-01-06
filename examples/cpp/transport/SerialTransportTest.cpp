@@ -35,7 +35,6 @@ static zuint32_t get(zuint8_t* data, zuint32_t nData, void* usr)
 static zuint32_t put(const zuint8_t* data, zuint32_t nData, void* usr)
 {
     zuint32_t n = MIN(MAX_FIFO - fifo.size(), nData);
-    //cout << "Put " << n << " bytes" << endl;
 
     for (zuint32_t i = 0; i < n; ++i)
         fifo.push(data[i]);
@@ -43,23 +42,23 @@ static zuint32_t put(const zuint8_t* data, zuint32_t nData, void* usr)
     return n;
 }
 
-static uint64_t utime(void* usr)
+static zuint64_t utime(void* usr)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return (uint64_t)tv.tv_sec * 1000000 + tv.tv_usec;
+    return (zuint64_t)tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
 class Handler
 {
-    int64_t lastHost = 0;
+    zint64_t lastHost = 0;
 
   public:
-    void handle(const ReceiveBuffer* rbuf, const string& chan, const example_t* msg)
+    void handle(const ReceiveBuffer* rbuf, const zstring_t& chan, const example_t* msg)
     {
         cout << "Message received" << endl;
 
-        if (msg->timestamp <= lastHost || rbuf->recv_utime < lastHost)  {
+        if (msg->timestamp <= lastHost || (zint64_t) rbuf->recv_utime < lastHost)  {
             assert("ERROR: utime mismatch. This should never happen");
         }
         lastHost = msg->timestamp;
@@ -81,10 +80,10 @@ int main(int argc, const char *argv[])
     Handler handler;
     auto sub = zcmLocal.subscribe("EXAMPLE", &Handler::handle, &handler);
 
-    uint64_t nextPublish = 0;
+    zuint64_t nextPublish = 0;
     while (true)
     {
-        uint64_t now = utime(NULL);
+        zuint64_t now = utime(NULL);
         if (now > nextPublish) {
             cout << "Publishing" << endl;
             example.timestamp = now;

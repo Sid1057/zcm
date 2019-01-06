@@ -10,13 +10,12 @@
 #define NRANGES 100
 #define CHANNEL "EXAMPLE"
 
-static bool quiet = false;
+static zbool_t quiet = zfalse;
 
 static void handler(const zcm_recv_buf_t *rbuf, const char *channel,
                     const example_t *msg, void *user)
 {
-    if (quiet)
-        return;
+    if (quiet) return;
 
     printf("Received message on channel \"%s\":\n", channel);
     printf("  timestamp   = %"PRId64"\n", msg->timestamp);
