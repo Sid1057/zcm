@@ -297,7 +297,7 @@ ssize_t UDPMSocket::sendBuffers(const UDPMAddress& dest, const char *a, size_t a
     mhdr.msg_controllen = 0;
     mhdr.msg_flags = 0;
 
-    return::sendmsg(fd, &mhdr, 0);
+    return ::sendmsg(fd, &mhdr, 0);
 }
 
 ssize_t UDPMSocket::sendBuffers(const UDPMAddress& dest, const char *a, size_t alen,
@@ -318,7 +318,7 @@ ssize_t UDPMSocket::sendBuffers(const UDPMAddress& dest, const char *a, size_t a
     mhdr.msg_controllen = 0;
     mhdr.msg_flags = 0;
 
-    return::sendmsg(fd, &mhdr, 0);
+    return ::sendmsg(fd, &mhdr, 0);
 }
 
 ssize_t UDPMSocket::sendBuffers(const UDPMAddress& dest, const char *a, size_t alen,
@@ -341,7 +341,7 @@ ssize_t UDPMSocket::sendBuffers(const UDPMAddress& dest, const char *a, size_t a
     mhdr.msg_controllen = 0;
     mhdr.msg_flags = 0;
 
-    return::sendmsg(fd, &mhdr, 0);
+    return ::sendmsg(fd, &mhdr, 0);
 }
 
 bool UDPMSocket::checkConnection(const string& ip, u16 port)

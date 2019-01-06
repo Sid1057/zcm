@@ -4,7 +4,6 @@
 
 #include "zcm/zcm-cpp.hpp"
 #include "zcm/util/debug.h"
-//#include "zcm/util/lockfile.h"
 
 #include "util/Types.hpp"
 #include "util/TimeUtil.hpp"
@@ -17,7 +16,7 @@
 #include <limits.h>
 
 #define ZCM_TRANS_CLASSNAME TransportFile
-#define MTU (SSIZE_MAX)
+#define MTU (1<<28)
 
 using namespace std;
 
@@ -81,18 +80,18 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         if (log) delete log;
     }
 
-    bool good()
+    zbool_t good()
     {
-        return log ? log->good() : false;
+        return log ? log->good() : zfalse;
     }
 
     /********************** METHODS **********************/
-    size_t get_mtu()
+    zuint32_t get_mtu()
     {
         return MTU;
     }
 
-    int sendmsg(zcm_msg_t msg)
+    zcm_retcode_t sendmsg(zcm_msg_t msg)
     {
         assert(good());
         assert(mode == "w" || mode == "a");
@@ -111,12 +110,12 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EOK;
     }
 
-    int recvmsg_enable(const char *channel, bool enable)
+    zcm_retcode_t recvmsg_enable(const zchar_t *channel, zbool_t enable)
     {
         return ZCM_EOK;
     }
 
-    int recvmsg(zcm_msg_t *msg, int timeout)
+    zcm_retcode_t recvmsg(zcm_msg_t *msg, zint32_t timeout)
     {
         assert(mode == "r");
         if (!good()) {
@@ -124,7 +123,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             //      has occurred. Not sure what to do here since this function
             //      has no way of communicating to the caller that this function
             //      shouldn't be called anymore
-            usleep(timeout);
+            if (timeout > 0) usleep(timeout);
             return ZCM_ECONNECT;
         }
 
@@ -170,16 +169,16 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return (ZCM_TRANS_CLASSNAME*)zt;
     }
 
-    static size_t _get_mtu(zcm_trans_t *zt)
+    static zuint32_t _get_mtu(zcm_trans_t *zt)
     { return cast(zt)->get_mtu(); }
 
-    static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
+    static zcm_retcode_t _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable)
+    static zcm_retcode_t _recvmsg_enable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
     { return cast(zt)->recvmsg_enable(channel, enable); }
 
-    static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, int timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zint32_t timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
     static void _destroy(zcm_trans_t *zt)

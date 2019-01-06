@@ -1,21 +1,61 @@
 #ifndef __ZCM_BASE_TYPES__
-#define __ZCM_BASE_TYPES__ \
-X(1,  uint8_t,   zuint8_t) \
-X(1,   int8_t,    zint8_t) \
-X(2, uint16_t,  zuint16_t) \
-X(2,  int16_t,   zint16_t) \
-X(4, uint32_t,  zuint32_t) \
-X(4,  int32_t,   zint32_t) \
-X(8, uint64_t,  zuint64_t) \
-X(8,  int64_t,   zint64_t) \
-X(4,    float, zfloat32_t) \
-X(8,   double, zfloat64_t) \
+#define __ZCM_BASE_TYPES__
 
+#include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <float.h>
+
+#ifndef ZCM_EMBEDDED
+#include <assert.h>
+#define ZCM_ASSERT(X) assert(X)
+#else
+#define ZCM_ASSERT(X)
+#endif
+
+#define ZCM_BASE_TYPES \
+    X( uint8_t,    zbyte_t) /* Must be at least  8 bits long */ \
+    X(  int8_t,    zbool_t) /* Must be at least  8 bits long */ \
+    X(    char,    zchar_t) /* Must be at least  8 bits long */ \
+    X( uint8_t,   zuint8_t) /* Must be at least  8 bits long */ \
+    X(  int8_t,    zint8_t) /* Must be at least  8 bits long */ \
+    X(uint16_t,  zuint16_t) /* Must be at least 16 bits long */ \
+    X( int16_t,   zint16_t) /* Must be at least 16 bits long */ \
+    X(uint32_t,  zuint32_t) /* Must be at least 32 bits long */ \
+    X( int32_t,   zint32_t) /* Must be at least 32 bits long */ \
+    X(uint64_t,  zuint64_t) /* Must be at least 64 bits long */ \
+    X( int64_t,   zint64_t) /* Must be at least 64 bits long */ \
+    X(   float, zfloat32_t) /* Must be at least 32 bits long */ \
+    X(  double, zfloat64_t) /* Must be at least 64 bits long */ \
+
+#define ZCM_RETURN_CODES \
+    X(ZCM_EOK,              0, "Okay, no errors"                       ) \
+    X(ZCM_EINVALID,         1, "Invalid arguments"                     ) \
+    X(ZCM_EAGAIN  ,         2, "Resource unavailable, try again"       ) \
+    X(ZCM_ECONNECT,         3, "Transport connection failed"           ) \
+    X(ZCM_EINTR   ,         4, "Operation was unexpectedly interrupted") \
+    X(ZCM_EUNKNOWN,         5, "Unknown error"                         ) \
+    X(ZCM_EMEMORY,          6, "Out of memory"                         ) \
+    X(ZCM_EOF,              7, "End of file"                           ) \
+    X(ZCM_NUM_RETURN_CODES, 8, "Invalid return code"                   )
+
+#define ztrue  (1)
+#define zfalse (0)
+
+#define ZCM_CHANNEL_MAXLEN 32
+
+#define zcm_malloc malloc
 
 #define X(_, NATIVE_TYPE, ZCM_BASE_TYPE) \
     typedef NATIVE_TYPE ZCM_BASE_TYPE
 #undef X
+
+/* Return codes */
+typedef enum zcm_return_codes zcm_retcode_t
+enum zcm_return_codes {
+    #define X(n, v, s) n = v,
+    ZCM_RETURN_CODES
+    #undef X
+};
 
 #endif // __ZCM_BASE_TYPES__

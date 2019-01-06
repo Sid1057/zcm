@@ -48,14 +48,14 @@
  *         Internally, the vtbl field should be set to the appropriate
  *         table of function pointers.
  *
- *      size_t get_mtu(zcm_trans_t* zt)
+ *      zuint32_t get_mtu(zcm_trans_t* zt)
  *      --------------------------------------------------------------------
  *         Returns the Maximum Transmission Unit supported by this transport
  *         The transport is allowed to ignore any message above this size
  *         Users of this transport should ensure that they never attempt to
  *         send messages larger than the MTU of their chosen transport
  *
- *      int sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
+ *      zcm_retcode_t sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
  *      --------------------------------------------------------------------
  *         The caller to this method initiates a message send operation. The
  *         caller must populate the fields of the zcm_msg_t. The channel must
@@ -64,7 +64,7 @@
  *         this method should block until the message has been successfully
  *         sent and should return ZCM_EOK.
  *
- *      int recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
+ *      zcm_retcode_t recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
  *      --------------------------------------------------------------------
  *         This method will enable/disable the receipt of messages on the particular
  *         channel. For 'all channels', the user should pass NULL for the channel.
@@ -83,7 +83,7 @@
  *         NOTE: This method should work concurrently and correctly with
  *         recvmsg(). On success, this method should return ZCM_EOK
  *
- *      int recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, int timeout)
+ *      zcm_retcode_t recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, zint32_t timeout)
  *      --------------------------------------------------------------------
  *         The caller to this method initiates a message recv operation. This
  *         methods blocks until it receives a message. It should return ZCM_EOK.
@@ -92,12 +92,13 @@
  *         NOTE: This method should work concurrently and correctly with
  *         recvmsg_enable(). If 'timeout >= 0' then recvmsg()
  *         should return EAGAIN if it is unable to receive a message within
- *         'timeout' milliseconds.
+ *         'timeout' milliseconds. If 'timeout < 0' then recvmsg() may block
+ *         indefinitely until it receives a message.
  *         NOTE: We do *NOT* require a very accurate clock for this timeout feature
  *         and users should only expect accuracy within a few milliseconds. Users
  *         should *not* attempt to use this timing mechanism for real-time events.
  *
- *      int update(zcm_trans_t* zt);
+ *      zcm_retcode_t update(zcm_trans_t* zt);
  *      --------------------------------------------------------------------
  *         This method is unused (in this mode) and should not be called by the user.
  *         An implementation is allowed to set this field to NULL.
@@ -129,7 +130,7 @@
  *         Users of this transport should ensure that they never attempt to
  *         send messages larger than the MTU of their chosen transport
  *
- *      int sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
+ *      zcm_retcode_t sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
  *      --------------------------------------------------------------------
  *         The caller to this method initiates a message send operation. The
  *         caller must populate the fields of the zcm_msg_t. The channel must
@@ -139,7 +140,7 @@
  *         message due to unavailability, ZCM_EAGAIN should be returned.
  *         On success ZCM_EOK should be returned.
  *
- *      int recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
+ *      zcm_retcode_t recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
  *      --------------------------------------------------------------------
  *         This method will enable/disable the receipt of messages on the particular
  *         channel. For 'all channels', the user should pass NULL for the channel.
@@ -151,7 +152,7 @@
  *         NOTE: This method does NOT have to work concurrently with recvmsg().
  *         On success, this method should return ZCM_EOK
  *
- *      int recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, int timeout)
+ *      zcm_retcode_t recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, zint32_t timeout)
  *      --------------------------------------------------------------------
  *         The caller to this method initiates a message recv operation. This
  *         methods should *never block*. If a message has been received then
@@ -161,7 +162,7 @@
  *         NOTE: This method does NOT have to work concurrently with recvmsg_enable()
  *         NOTE: The 'timeout' field is ignored
  *
- *      int update(zcm_trans_t* zt)
+ *      zcm_retcode_t update(zcm_trans_t* zt)
  *      --------------------------------------------------------------------
  *         This method is called from the zcm_handle_nonblock() function.
  *         This method provides a periodicly-running routine that can perform
@@ -184,8 +185,8 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+
 #include "zcm/zcm.h"
 
 /* Only define inline for C99 builds or better */
@@ -198,15 +199,14 @@ extern "C" {
 typedef struct zcm_msg_t zcm_msg_t;
 typedef struct zcm_trans_methods_t zcm_trans_methods_t;
 
-
 /* TODO: Discuss the semantics of this datastruct depending on the context (send vs. recv) */
 /* TODO: do we really need another structure for this (zcm_recv_buf_t is almost identiical) */
 struct zcm_msg_t
 {
-    uint64_t utime;  /* 0 means invalid (caller should compute its own utime) */
-    const char* channel;
-    size_t len;
-    uint8_t* buf;
+    zuint64_t utime;  /* 0 means invalid (caller should compute its own utime) */
+    const zchar_t* channel;
+    zuint32_t len;
+    zuint8_t* buf;
 };
 
 struct zcm_trans_t
@@ -217,31 +217,37 @@ struct zcm_trans_t
 
 struct zcm_trans_methods_t
 {
-    size_t  (*get_mtu)(zcm_trans_t* zt);
-    int     (*sendmsg)(zcm_trans_t* zt, zcm_msg_t msg);
-    int     (*recvmsg_enable)(zcm_trans_t* zt, const char* channel, bool enable);
-    int     (*recvmsg)(zcm_trans_t* zt, zcm_msg_t* msg, int timeout);
-    int     (*update)(zcm_trans_t* zt);
-    void    (*destroy)(zcm_trans_t* zt);
+    zuint32_t      (*get_mtu)(zcm_trans_t* zt);
+    zcm_retcode_t (*sendmsg)(zcm_trans_t* zt, zcm_msg_t msg);
+    zcm_retcode_t (*recvmsg_enable)(zcm_trans_t* zt, const char* channel, bool enable);
+    zcm_retcode_t (*recvmsg)(zcm_trans_t* zt, zcm_msg_t* msg, zint32_t timeout);
+    zcm_retcode_t (*update)(zcm_trans_t* zt);
+    void          (*destroy)(zcm_trans_t* zt);
 };
 
 /* Helper functions to make the VTbl dispatch cleaner */
-static INLINE size_t zcm_trans_get_mtu(zcm_trans_t* zt)
+static INLINE zuint32_t
+zcm_trans_get_mtu(zcm_trans_t* zt)
 { return zt->vtbl->get_mtu(zt); }
 
-static INLINE int zcm_trans_sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
+static INLINE zcm_retcode_t
+zcm_trans_sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
 { return zt->vtbl->sendmsg(zt, msg); }
 
-static INLINE int zcm_trans_recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
+static INLINE zcm_retcode_t
+zcm_trans_recvmsg_enable(zcm_trans_t* zt, const char* channel, bool enable)
 { return zt->vtbl->recvmsg_enable(zt, channel, enable); }
 
-static INLINE int zcm_trans_recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, int timeout)
+static INLINE zcm_retcode_t
+zcm_trans_recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, zint32_t timeout)
 { return zt->vtbl->recvmsg(zt, msg, timeout); }
 
-static INLINE int zcm_trans_update(zcm_trans_t* zt)
+static INLINE zcm_retcode_t
+zcm_trans_update(zcm_trans_t* zt)
 { return zt->vtbl->update(zt); }
 
-static INLINE void zcm_trans_destroy(zcm_trans_t* zt)
+static INLINE void
+zcm_trans_destroy(zcm_trans_t* zt)
 { return zt->vtbl->destroy(zt); }
 
 #ifdef __cplusplus

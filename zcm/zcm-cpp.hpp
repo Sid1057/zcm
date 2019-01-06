@@ -31,9 +31,10 @@ class ZCM
     virtual inline ~ZCM();
 
     virtual inline bool good() const;
-    virtual inline int err() const; // errno is a reserved name, so this returns zcm_errno()
+    // returns zcm_errno()
+    virtual inline enum zcm_return_codes err() const;
     virtual inline const char* strerror() const;
-    virtual inline const char* strerrno(int err) const;
+    virtual inline const char* strerrno(enum zcm_return_codes err) const;
 
     #ifndef ZCM_EMBEDDED
     virtual inline void run();
@@ -41,14 +42,14 @@ class ZCM
     virtual inline void stop();
     virtual inline void pause();
     virtual inline void resume();
-    virtual inline int  handle();
+    virtual inline bool handle();
     virtual inline void setQueueSize(uint32_t sz);
     #endif
-    virtual inline int  handleNonblock();
+    virtual inline bool handleNonblock();
     virtual inline void flush();
 
   public:
-    inline int publish(const std::string& channel, const uint8_t* data, uint32_t len);
+    inline bool publish(const std::string& channel, const zuint8_t* data, zuint32_t len);
 
     // Note: if we make a publish binding that takes a const message reference, the compiler does
     //       not select the right version between the pointer and reference versions, so when the
@@ -56,7 +57,7 @@ class ZCM
     //       compile errors (turns the input into a double pointer). We have to choose one or the
     //       other for the api.
     template <class Msg>
-    inline int publish(const std::string& channel, const Msg* msg);
+    inline bool publish(const std::string& channel, const Msg* msg);
 
     inline Subscription* subscribe(const std::string& channel,
                                    void (*cb)(const ReceiveBuffer* rbuf,
@@ -98,7 +99,9 @@ class ZCM
 
   protected:
     /**** Methods for inheritor override ****/
-    virtual inline int publishRaw(const std::string& channel, const uint8_t* data, uint32_t len);
+    virtual inline bool publishRaw(const std::string& channel,
+                                   const zuint8_t* data,
+                                   zuint32_t len);
 
     // Set the value of "rawSub" with your underlying subscription. "rawSub" will be passed
     // (by reference) into unsubscribeRaw when zcm->unsubscribe() is called on a cpp subscription
@@ -141,11 +144,11 @@ class Subscription
 #ifndef ZCM_EMBEDDED
 struct LogEvent
 {
-    int64_t     eventnum;
-    int64_t     timestamp;
-    std::string channel;
-    int32_t     datalen;
-    uint8_t*       data;
+    zint64_t     eventnum;
+    zint64_t     timestamp;
+    std::string  channel;
+    zint32_t     datalen;
+    zuint8_t*    data;
 };
 
 struct LogFile
@@ -157,7 +160,7 @@ struct LogFile
     inline void close();
 
     /**** Methods general operations ****/
-    inline int seekToTimestamp(int64_t timestamp);
+    inline int seekToTimestamp(zint64_t timestamp);
     inline FILE* getFilePtr();
 
     /**** Methods for read/write ****/
@@ -165,7 +168,7 @@ struct LogFile
     inline const LogEvent* readNextEvent();
     inline const LogEvent* readPrevEvent();
     inline const LogEvent* readEventAtOffset(off_t offset);
-    inline int             writeEvent(const LogEvent* event);
+    inline zbool_t         writeEvent(const LogEvent* event);
 
   private:
     inline const LogEvent* cplusplusIfyEvent(zcm_eventlog_event_t* le);

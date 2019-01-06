@@ -30,7 +30,8 @@ def build(ctx):
     embedSource = ['zcm.h', 'zcm_private.h', 'zcm.c',
                    'zcm-cpp.hpp', 'zcm-cpp-impl.hpp',
                    'zcm_coretypes.h', 'zcm_base_types.h',
-                   'transport.h', 'nonblocking.h', 'nonblocking.c',
+                   'transport.h',
+                   'nonblocking.h', 'nonblocking.c',
                    'transport/generic_serial_transport.h',
                    'transport/generic_serial_transport.c' ]
 

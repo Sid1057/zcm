@@ -103,7 +103,7 @@ inline void ZCM::resume()
 #endif
 
 #ifndef ZCM_EMBEDDED
-inline int ZCM::handle()
+inline bool ZCM::handle()
 {
     return zcm_handle(zcm);
 }
@@ -116,7 +116,7 @@ inline void ZCM::setQueueSize(uint32_t sz)
 }
 #endif
 
-inline int ZCM::handleNonblock()
+inline bool ZCM::handleNonblock()
 {
     return zcm_handle_nonblock(zcm);
 }
@@ -126,25 +126,29 @@ inline void ZCM::flush()
     return zcm_flush(zcm);
 }
 
-inline int ZCM::publish(const std::string& channel, const uint8_t* data, uint32_t len)
+inline bool ZCM::publish(const std::string& channel, const zuint8_t* data, zuint32_t len)
 {
     return publishRaw(channel, data, len);
 }
 
 template <class Msg>
-inline int ZCM::publish(const std::string& channel, const Msg* msg)
+inline bool ZCM::publish(const std::string& channel, const Msg* msg)
 {
-    uint32_t len = msg->getEncodedSize();
-    uint8_t* buf = new uint8_t[len];
-    if (!buf) return ZCM_EMEMORY;
-    int encodeRet = msg->encode(buf, 0, len);
-    if (encodeRet < 0 || (uint32_t) encodeRet != len) {
-        delete[] buf;
-        return ZCM_EAGAIN;
+    zuint32_t len = msg->getEncodedSize();
+    zuint8_t* buf = new zuint8_t[len];
+    if (!buf) {
+        zcm->err = ZCM_EMEMORY;
+        return false;
     }
-    int status = publishRaw(channel, buf, len);
+    zint32_t encodeRet = msg->encode(buf, 0, len);
+    if (encodeRet < 0 || (zuint32_t) encodeRet != len) {
+        delete[] buf;
+        zcm->err = ZCM_EAGAIN;
+        return false;
+    }
+    auto ret = publishRaw(channel, buf, len);
     delete[] buf;
-    return status;
+    return ret;
 }
 
 inline Subscription* ZCM::subscribe(const std::string& channel,
@@ -418,7 +422,7 @@ inline void ZCM::unsubscribe(Subscription* sub)
 inline zcm_t* ZCM::getUnderlyingZCM()
 { return zcm; }
 
-inline int ZCM::publishRaw(const std::string& channel, const uint8_t* data, uint32_t len)
+inline bool ZCM::publishRaw(const std::string& channel, const zuint8_t* data, zuint32_t len)
 { return zcm_publish(zcm, channel.c_str(), data, len); }
 
 inline void ZCM::subscribeRaw(void*& rawSub, const std::string& channel,
@@ -459,7 +463,7 @@ inline bool LogFile::good() const
     return eventlog != nullptr;
 }
 
-inline int LogFile::seekToTimestamp(int64_t timestamp)
+inline zint64_t LogFile::seekToTimestamp(zint64_t timestamp)
 {
     return zcm_eventlog_seek_to_timestamp(eventlog, timestamp);
 }
@@ -495,13 +499,14 @@ inline const LogEvent* LogFile::readPrevEvent()
     zcm_eventlog_event_t* evt = zcm_eventlog_read_prev_event(eventlog);
     return cplusplusIfyEvent(evt);
 }
+
 inline const LogEvent* LogFile::readEventAtOffset(off_t offset)
 {
     zcm_eventlog_event_t* evt = zcm_eventlog_read_event_at_offset(eventlog, offset);
     return cplusplusIfyEvent(evt);
 }
 
-inline int LogFile::writeEvent(const LogEvent* event)
+inline zbool_t LogFile::writeEvent(const LogEvent* event)
 {
     zcm_eventlog_event_t evt;
     evt.eventnum = event->eventnum;

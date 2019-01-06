@@ -1,3 +1,5 @@
+#include <errno.h>
+
 #include "udpm.hpp"
 #include "buffers.hpp"
 #include "udpmsocket.hpp"
@@ -6,6 +8,8 @@
 #include "zcm/transport.h"
 #include "zcm/transport_registrar.h"
 #include "zcm/transport_register.hpp"
+
+#include "util/StringUtil.hpp"
 
 #define MTU (1<<28)
 
@@ -78,8 +82,8 @@ struct UDPM
 
     int handle();
 
-    int sendmsg(zcm_msg_t msg);
-    int recvmsg(zcm_msg_t *msg, int timeout);
+    zcm_retcode_t sendmsg(zcm_msg_t msg);
+    zcm_retcode_t recvmsg(zcm_msg_t *msg, int timeout);
 
   private:
     // These returns non-null when a full message has been received
@@ -273,7 +277,7 @@ Message *UDPM::readMessage(int timeout)
     return msg;
 }
 
-int UDPM::sendmsg(zcm_msg_t msg)
+zcm_retcode_t UDPM::sendmsg(zcm_msg_t msg)
 {
     int channel_size = strlen(msg.channel);
     if (channel_size > ZCM_CHANNEL_MAXLEN) {
@@ -299,7 +303,21 @@ int UDPM::sendmsg(zcm_msg_t msg)
                   msg.len, msg.channel, packet_size);
         msg_seqno++;
 
-        return (status == packet_size) ? 0 : status;
+        if (status == packet_size) return ZCM_EOK;
+
+        if (status >= 0) return ZCM_EAGAIN;
+
+        switch (errno) {
+            case EAGAIN:
+                return ZCM_EAGAIN
+                break;
+            case ENOMEM:
+                return ZCM_EMEMORY;
+                break;
+            default:
+                return ZCM_EUNKNOWN;
+                break;
+        }
     }
 
 
@@ -311,7 +329,7 @@ int UDPM::sendmsg(zcm_msg_t msg)
 
         if (nfragments > 65535) {
             fprintf(stderr, "ZCM error: too much data for a single message\n");
-            return -1;
+            return ZCM_EINVALID;
         }
 
         // acquire transmit lock so that all fragments are transmitted
@@ -365,22 +383,20 @@ int UDPM::sendmsg(zcm_msg_t msg)
         msg_seqno++;
     }
 
-    return 0;
+    return ZCM_EOK;
 }
 
-int UDPM::recvmsg(zcm_msg_t *msg, int timeout)
+zcm_retcode_t UDPM::recvmsg(zcm_msg_t *msg, zint32_t timeout)
 {
-    if (m)
-        pool.freeMessage(m);
+    if (m) pool.freeMessage(m);
 
     m = readMessage(timeout);
-    if (m == nullptr)
-        return ZCM_EAGAIN;
+    if (m == nullptr) return ZCM_EAGAIN;
 
-    msg->utime = m->utime;
+    msg->utime = (zuint64_t) m->utime;
     msg->channel = m->channel;
     msg->len = m->datalen;
-    msg->buf = (uint8_t*) m->data;
+    msg->buf = (zuint8_t*) m->data;
 
     return ZCM_EOK;
 }
@@ -453,16 +469,16 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return (ZCM_TRANS_CLASSNAME*)zt;
     }
 
-    static size_t _getMtu(zcm_trans_t *zt)
+    static zuint32_t _getMtu(zcm_trans_t *zt)
     { return MTU; }
 
-    static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
+    static zcm_retcode_t _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->udpm.sendmsg(msg); }
 
-    static int _recvmsgEnable(zcm_trans_t *zt, const char *channel, bool enable)
+    static zcm_retcode_t _recvmsgEnable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
     { return ZCM_EOK; }
 
-    static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, int timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zuint32_t timeout)
     { return cast(zt)->udpm.recvmsg(msg, timeout); }
 
     static void _destroy(zcm_trans_t *zt)
@@ -486,24 +502,6 @@ static const char *optFind(zcm_url_opts_t *opts, const string& key)
         if (key == opts->name[i])
             return opts->value[i];
     return NULL;
-}
-
-// TODO: this probably belongs more in a string util like file
-#include <sstream>
-static vector<string> split(const string& str, char delimiter)
-{
-    vector<string> v;
-    std::stringstream ss {str};
-    string tok;
-
-    while(getline(ss, tok, delimiter))
-        v.push_back(std::move(tok));
-
-    auto len = str.size();
-    if (len > 0 && str[len-1] == delimiter)
-        v.push_back("");
-
-    return v;
 }
 
 static zcm_trans_t *createUdpm(zcm_url_t *url)

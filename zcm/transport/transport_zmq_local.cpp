@@ -28,7 +28,7 @@ using namespace std;
 
 // Define this the class name you want
 #define ZCM_TRANS_CLASSNAME TransportZmqLocal
-#define MTU (1<<28)
+#define MTU (UINT32_MAX)
 #define START_BUF_SIZE (1 << 20)
 #define ZMQ_IO_THREADS 1
 #define IPC_NAME_PREFIX "zcm-channel-zmq-ipc-"
@@ -242,12 +242,12 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     }
 
     /********************** METHODS **********************/
-    size_t getMtu()
+    zuint32_t getMtu()
     {
         return MTU;
     }
 
-    int sendmsg(zcm_msg_t msg)
+    zcm_retcode_t sendmsg(zcm_msg_t msg)
     {
         string channel = msg.channel;
         if (channel.size() > ZCM_CHANNEL_MAXLEN)
@@ -266,7 +266,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EUNKNOWN;
     }
 
-    int recvmsgEnable(const char *channel, bool enable)
+    zcm_retcode_t recvmsgEnable(const char *channel, bool enable)
     {
         // Mutex used to protect 'subsocks' while allowing
         // recvmsgEnable() and recvmsg() to be called
@@ -332,7 +332,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         }
     }
 
-    int recvmsg(zcm_msg_t *msg, int timeout)
+    zcm_retcode_t recvmsg(zcm_msg_t *msg, zint32_t timeout)
     {
         // Build up a list of poll items
         vector<zmq_pollitem_t> pitems;
@@ -389,18 +389,19 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                         // TODO: implement error handling, don't just assert
                         assert(0 && "unexpected codepath");
                     }
-                    assert(0 < rc);
-                    assert(rc < MTU && "Received message that is bigger than a legally-published message could be");
-                    if (rc > (int)recvmsgBufferSize) {
+                    assert(rc > 0);
+                    zuint32_t sz = (zuint32_t) rc;
+                    assert(sz < MTU && "Received message that is bigger than a legally-published message could be");
+                    if (sz > (int)recvmsgBufferSize) {
                         ZCM_DEBUG("Reallocating recv buffer to handle larger messages. Size is now %d", rc);
-                        recvmsgBufferSize = rc * 2;
+                        recvmsgBufferSize = sz * 2;
                         delete[] recvmsgBuffer;
-                        recvmsgBuffer = new uint8_t[recvmsgBufferSize];
+                        recvmsgBuffer = new zuint8_t[recvmsgBufferSize];
                         return ZCM_EAGAIN;
                     }
                     recvmsgChannel = pchannels[i];
                     msg->channel = recvmsgChannel.c_str();
-                    msg->len = rc;
+                    msg->len = sz;
                     msg->buf = recvmsgBuffer;
 
                     // Note: This is probably fine and there probably isn't an elegant
@@ -429,16 +430,16 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return (ZCM_TRANS_CLASSNAME*)zt;
     }
 
-    static size_t _getMtu(zcm_trans_t *zt)
+    static zuint32_t _getMtu(zcm_trans_t *zt)
     { return cast(zt)->getMtu(); }
 
-    static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
+    static zcm_retcode_t _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsgEnable(zcm_trans_t *zt, const char *channel, bool enable)
+    static zcm_retcode_t _recvmsgEnable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
     { return cast(zt)->recvmsgEnable(channel, enable); }
 
-    static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, int timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zuint32_t timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
     static void _destroy(zcm_trans_t *zt)

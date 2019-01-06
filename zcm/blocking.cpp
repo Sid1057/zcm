@@ -476,7 +476,7 @@ int zcm_blocking_t::unsubscribe(zcm_sub_t* sub, bool block)
     }
 
     bool success = true;
-    if (sub->regex) {
+    if (sub->regexObj) {
         success = deleteFromSubList(subRegex, sub);
     } else {
         auto it = subs.find(sub->channel);
@@ -747,7 +747,7 @@ bool zcm_blocking_t::sendOneMessage(bool returnIfPaused)
 bool zcm_blocking_t::deleteSubEntry(zcm_sub_t* sub, size_t nentriesleft)
 {
     int rc = ZCM_EOK;
-    if (sub->regex) {
+    if (sub->regexobj) {
         delete (std::regex*) sub->regexobj;
         if (nentriesleft == 0) {
             rc = zcm_trans_recvmsg_enable(zt, NULL, false);

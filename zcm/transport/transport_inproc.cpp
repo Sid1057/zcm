@@ -22,13 +22,13 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     // using the "inFlight" pointers to store their memory until the next message is dispatched
     // Note: Have to use free() to clean up chan memory in these because we create them via strdup
     deque<zcm_msg_t*> msgs;
-    const char*    inFlightChanMem = nullptr;
-          uint8_t* inFlightDataMem = nullptr;
+    const zchar*    inFlightChanMem = nullptr;
+          zuint8_t* inFlightDataMem = nullptr;
 
     condition_variable msgCond;
     mutex msgLock;
 
-    ZCM_TRANS_CLASSNAME(zcm_url_t *url, bool blocking)
+    ZCM_TRANS_CLASSNAME(zcm_url_t *url, zbool_t blocking)
     {
         trans_type = blocking ? ZCM_BLOCKING : ZCM_NONBLOCKING;
         vtbl = &methods;
@@ -47,12 +47,12 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         delete [] inFlightDataMem;
     }
 
-    bool good() { return true; }
+    zbool_t good() { return ztrue; }
 
     /********************** METHODS **********************/
-    size_t get_mtu() { return MTU; }
+    zuint32_t get_mtu() { return MTU; }
 
-    int sendmsg(zcm_msg_t msg)
+    zcm_retcode_t sendmsg(zcm_msg_t msg)
     {
         size_t chanLen = 0;
         for (; chanLen < ZCM_CHANNEL_MAXLEN + 1; ++chanLen) {
@@ -71,7 +71,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         newMsg->utime = msg.utime;
         newMsg->len = msg.len;
         newMsg->channel = strdup(msg.channel);
-        newMsg->buf = new uint8_t[msg.len];
+        newMsg->buf = new zuint8_t[msg.len];
         std::copy_n(msg.buf, msg.len, newMsg->buf);
 
         std::unique_lock<mutex> lk(msgLock, defer_lock);
@@ -85,10 +85,12 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EOK;
     }
 
-    int recvmsg_enable(const char *channel, bool enable) { return ZCM_EOK; }
+    zcm_retcode_t recvmsg_enable(const zchar_t *channel, zbool_t enable) { return ZCM_EOK; }
 
-    int recvmsg(zcm_msg_t *msg, int timeout)
+    zcm_retcode_t recvmsg(zcm_msg_t *msg, zint32_t timeout)
     {
+        if (timeout < 0) timeout = std::numeric_limits<zint32_t>::max();
+
         std::unique_lock<mutex> lk(msgLock, defer_lock);
 
         if (trans_type == ZCM_BLOCKING) {
@@ -117,7 +119,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EOK;
     }
 
-    int update() { return ZCM_EOK; }
+    zcm_retcode_t update() { return ZCM_EOK; }
 
     /********************** STATICS **********************/
     static zcm_trans_methods_t methods;
@@ -127,19 +129,19 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return (ZCM_TRANS_CLASSNAME*)zt;
     }
 
-    static size_t _get_mtu(zcm_trans_t *zt)
+    static zuint32_t _get_mtu(zcm_trans_t *zt)
     { return cast(zt)->get_mtu(); }
 
-    static int _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
+    static zcm_retcode_t _sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable)
+    static zcm_retcode_t _recvmsg_enable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
     { return cast(zt)->recvmsg_enable(channel, enable); }
 
-    static int _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, int timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zint32_t timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
-    static int _update(zcm_trans_t *zt)
+    static zcm_retcode_t _update(zcm_trans_t *zt)
     { return cast(zt)->update(); }
 
     static void _destroy(zcm_trans_t *zt)

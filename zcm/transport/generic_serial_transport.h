@@ -11,18 +11,18 @@ extern "C" {
 #include "zcm/transport.h"
 
 zcm_trans_t *zcm_trans_generic_serial_create(
-        size_t (*get)(uint8_t* data, size_t nData, void* usr),
-        size_t (*put)(const uint8_t* data, size_t nData, void* usr),
+        zuint32_t (*get)(zuint8_t* data, zuint32_t nData, void* usr),
+        zuint32_t (*put)(const zuint8_t* data, zuint32_t nData, void* usr),
         void* put_get_usr,
-        uint64_t (*timestamp_now)(void* usr),
+        zuint64_t (*timestamp_now)(void* usr),
         void* time_usr,
-        size_t MTU, size_t bufSize);
+        zuint32_t MTU, zuint32_t bufSize);
 
 // frees all resources inside of zt and frees zt itself
 void zcm_trans_generic_serial_destroy(zcm_trans_t* zt);
 
-int serial_update_rx(zcm_trans_t *zt);
-int serial_update_tx(zcm_trans_t *zt);
+zcm_retcode_t serial_update_rx(zcm_trans_t *zt);
+zcm_retcode_t serial_update_tx(zcm_trans_t *zt);
 
 #ifdef __cplusplus
 }

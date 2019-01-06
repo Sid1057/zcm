@@ -239,8 +239,8 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
     bool raw;
     string rawChan;
-    int rawSize;
-    std::unique_ptr<uint8_t[]> rawBuf;
+    zuint32_t rawSize;
+    std::unique_ptr<zuint8_t[]> rawBuf;
 
     string address;
 
@@ -325,7 +325,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         ser.open(address, baud, hwFlowControl);
 
         if (raw) {
-            rawBuf.reset(new uint8_t[rawSize]);
+            rawBuf.reset(new zuint8_t[rawSize]);
             gst = nullptr;
         } else {
             gst = zcm_trans_generic_serial_create(&ZCM_TRANS_CLASSNAME::get,
@@ -348,7 +348,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ser.isOpen();
     }
 
-    static size_t get(uint8_t* data, size_t nData, void* usr)
+    static zuint32_t get(zuint8_t* data, zuint32_t nData, void* usr)
     {
         ZCM_TRANS_CLASSNAME* me = cast((zcm_trans_t*) usr);
         uint64_t startUtime = TimeUtil::utime();
@@ -358,21 +358,21 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ret < 0 ? 0 : ret;
     }
 
-    static size_t put(const uint8_t* data, size_t nData, void* usr)
+    static zuint32_t put(const zuint8_t* data, zuint32_t nData, void* usr)
     {
         ZCM_TRANS_CLASSNAME* me = cast((zcm_trans_t*) usr);
         int ret = me->ser.write(data, nData);
         return ret < 0 ? 0 : ret;
     }
 
-    static uint64_t timestamp_now(void* usr)
+    static zuint64_t timestamp_now(void* usr)
     { return TimeUtil::utime(); }
 
     /********************** METHODS **********************/
-    size_t getMtu()
+    zuint32_t getMtu()
     { return raw ? MTU : zcm_trans_get_mtu(this->gst); }
 
-    int sendmsg(zcm_msg_t msg)
+    zcm_retcode_t sendmsg(zcm_msg_t msg)
     {
         if (raw) {
             if (put(msg.buf, msg.len, this) != 0) return ZCM_EOK;
@@ -381,21 +381,21 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             // Note: No need to lock here ONLY because the internals of
             //       generic serial transport sendmsg only use the sendBuffer
             //       and touch no variables related to receiving
-            int ret = zcm_trans_sendmsg(this->gst, msg);
+            zcm_retcode_t ret = zcm_trans_sendmsg(this->gst, msg);
             if (ret != ZCM_EOK) return ret;
             return serial_update_tx(this->gst);
         }
     }
 
-    int recvmsgEnable(const char* channel, bool enable)
+    zcm_retcode_t recvmsgEnable(const zchar_t* channel, zbool_t enable)
     { return raw ? ZCM_EOK : zcm_trans_recvmsg_enable(this->gst, channel, enable); }
 
-    int recvmsg(zcm_msg_t* msg, int timeoutMs)
+    zcm_retcode_t recvmsg(zcm_msg_t* msg, zint32_t timeoutMs)
     {
         timeoutLeft = timeoutMs > 0 ? timeoutMs * 1e3 : numeric_limits<uint64_t>::max();
 
         if (raw) {
-            size_t sz = get(rawBuf.get(), rawSize, this);
+            zuint32_t sz = get(rawBuf.get(), rawSize, this);
             if (sz == 0 || rawChan.empty()) return ZCM_EAGAIN;
 
             msg->utime   = timestamp_now(this);
@@ -440,16 +440,16 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return (ZCM_TRANS_CLASSNAME*)zt;
     }
 
-    static size_t _getMtu(zcm_trans_t* zt)
+    static zuint32_t _getMtu(zcm_trans_t* zt)
     { return cast(zt)->getMtu(); }
 
-    static int _sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
+    static zcm_retcode_t _sendmsg(zcm_trans_t* zt, zcm_msg_t msg)
     { return cast(zt)->sendmsg(msg); }
 
-    static int _recvmsgEnable(zcm_trans_t* zt, const char* channel, bool enable)
+    static zcm_retcode_t _recvmsgEnable(zcm_trans_t* zt, const zchar_t* channel, zbool_t enable)
     { return cast(zt)->recvmsgEnable(channel, enable); }
 
-    static int _recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, int timeout)
+    static zcm_retcode_t _recvmsg(zcm_trans_t* zt, zcm_msg_t* msg, zint32_t timeout)
     { return cast(zt)->recvmsg(msg, timeout); }
 
     static void _destroy(zcm_trans_t* zt)
