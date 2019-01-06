@@ -74,7 +74,7 @@ static zbool_t sync_stream_backwards(zcm_eventlog_t *l)
 
 static zcm_retcode_t get_next_event_time(zuint64_t* timestamp, zcm_eventlog_t *l)
 {
-    if (sync_stream(l)) return ZCM_EOF;
+    if (!sync_stream(l)) return ZCM_EOF;
 
     zint64_t event_num;
     if (0 != freadu64(l->f, &event_num)) return ZCM_EOF;
@@ -189,7 +189,7 @@ static zcm_eventlog_event_t *zcm_event_read_helper(zcm_eventlog_t *l, zbool_t re
 
 zcm_eventlog_event_t *zcm_eventlog_read_next_event(zcm_eventlog_t *l)
 {
-    if (sync_stream(l)) return NULL;
+    if (!sync_stream(l)) return NULL;
     return zcm_event_read_helper(l, 0);
 }
 
@@ -202,7 +202,7 @@ zcm_eventlog_event_t *zcm_eventlog_read_prev_event(zcm_eventlog_t *l)
 zcm_eventlog_event_t *zcm_eventlog_read_event_at_offset(zcm_eventlog_t *l, zoff_t offset)
 {
     fseeko(l->f, offset, SEEK_SET);
-    if (sync_stream(l)) return NULL;
+    if (!sync_stream(l)) return NULL;
     return zcm_event_read_helper(l, 0);
 }
 

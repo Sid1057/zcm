@@ -18,18 +18,18 @@
 } while(0)
 
 #define GENERIC_MTU 256
-int zcm_msg_validate(zcm_msg_t msg)
+zcm_retcode_t zcm_msg_validate(zcm_msg_t msg)
 {
     if (strlen(msg.channel) > ZCM_CHANNEL_MAXLEN) return ZCM_EINVALID;
     if (msg.len > GENERIC_MTU) return ZCM_EINVALID;
     return ZCM_EOK;
 }
-size_t generic_get_mtu(zcm_trans_t *zt) { return GENERIC_MTU; }
-int    generic_sendmsg(zcm_trans_t *zt, zcm_msg_t msg) { return zcm_msg_validate(msg); }
-int    generic_recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable) { return ZCM_EOK; }
-int    generic_update(zcm_trans_t *zt) { FAIL("update should never be called on a blocking transport"); }
-int    generic_recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, int timeout) { usleep(timeout*1000); return ZCM_EAGAIN; }
-void   generic_destroy(zcm_trans_t *zt) {}
+zuint32_t     generic_get_mtu(zcm_trans_t *zt) { return GENERIC_MTU; }
+zcm_retcode_t generic_sendmsg(zcm_trans_t *zt, zcm_msg_t msg) { return zcm_msg_validate(msg); }
+zcm_retcode_t generic_recvmsg_enable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable) { return ZCM_EOK; }
+zcm_retcode_t generic_update(zcm_trans_t *zt) { FAIL("update should never be called on a blocking transport"); }
+zcm_retcode_t generic_recvmsg(zcm_trans_t *zt, zcm_msg_t *msg, zint32_t timeout) { usleep(timeout*1000); return ZCM_EAGAIN; }
+void          generic_destroy(zcm_trans_t *zt) {}
 
 void init_generic(zcm_trans_t *zt, zcm_trans_methods_t *methods)
 {
@@ -59,7 +59,7 @@ static zcm_trans_t *transport_generic_create(zcm_url_t *url)
 
 static zcm_trans_methods_t pub_blockforever_methods;
 static zcm_trans_t pub_blockforever_trans;
-static int pub_blockforever_sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
+static zcm_retcode_t pub_blockforever_sendmsg(zcm_trans_t *zt, zcm_msg_t msg)
 {
     // XXX this is probably a bug in the transport api
     //     sendmsg() is allowed to block indefinately. This means that it might be impossible
@@ -77,7 +77,7 @@ static zcm_trans_t *transport_pub_blockforever_create(zcm_url_t *url)
 
 static zcm_trans_methods_t sub_methods;
 static zcm_trans_t sub_trans;
-static int sub_recvmsg_enable(zcm_trans_t *zt, const char *channel, bool enable)
+static zcm_retcode_t sub_recvmsg_enable(zcm_trans_t *zt, const zchar_t *channel, zbool_t enable)
 {
     if (0 == strcmp(channel, "CANNOT_SUB")) {
         return ZCM_EUNKNOWN;
@@ -119,12 +119,12 @@ static void test_fail_construct(void)
     zcm_t zcm;
 
     memset(&zcm, 0, sizeof(zcm));
-    ENSURE(-1 == zcm_init(&zcm, "test-fail"));
+    ENSURE(!zcm_init(&zcm, "test-fail"));
     ENSURE(ZCM_ECONNECT == zcm_errno(&zcm));
 
     memset(&zcm, 0, sizeof(zcm));
-    ENSURE(-1 == zcm_init_trans(&zcm, NULL));
-    ENSURE(ZCM_ECONNECT == zcm_errno(&zcm));
+    ENSURE(!zcm_init_trans(&zcm, NULL));
+    ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
 }
 
 static void test_publish(void)
@@ -141,27 +141,27 @@ static void test_publish(void)
         /* channel size at limit */
         memset(channel, 'A', ZCM_CHANNEL_MAXLEN);
         channel[ZCM_CHANNEL_MAXLEN] = '\0';
-        ENSURE(0 == zcm_publish(&zcm, channel, &data, 1));
+        ENSURE(zcm_publish(&zcm, channel, (zuint8_t*) &data, 1));
         ENSURE(ZCM_EOK == zcm_errno(&zcm));
 
         /* channel size 1 passed the limit */
         channel[ZCM_CHANNEL_MAXLEN] = 'A';
         channel[ZCM_CHANNEL_MAXLEN+1] = '\0';
-        ENSURE(-1 == zcm_publish(&zcm, channel, &data, 1));
+        ENSURE(!zcm_publish(&zcm, channel, (zuint8_t*) &data, 1));
         ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
     }
 
     // Test data size limit checking
     {
         const char *channel = "FOO";
-        char *data = malloc(GENERIC_MTU+1);
+        char *data = malloc(GENERIC_MTU + 1);
 
         /* data size at limit */
-        ENSURE(0 == zcm_publish(&zcm, channel, data, GENERIC_MTU));
+        ENSURE(zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU));
         ENSURE(ZCM_EOK == zcm_errno(&zcm));
 
         /* data size 1 passed the limit */
-        ENSURE(-1 == zcm_publish(&zcm, channel, data, GENERIC_MTU+1));
+        ENSURE(!zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU + 1));
         ENSURE(ZCM_EINVALID == zcm_errno(&zcm));
 
         free(data);
@@ -181,8 +181,8 @@ static void test_publish_msgdrop(void)
     const int MAX_PUBS = 100000;
     for (int i = 0; i < MAX_PUBS; i++) {
         char data = 'a';
-        int ret = zcm_publish(&zcm, "CHANNEL", &data, 1);
-        if (ret == -1) {
+        zbool_t ret = zcm_publish(&zcm, "CHANNEL", (zuint8_t*) &data, 1);
+        if (!ret) {
             ENSURE(ZCM_EAGAIN == zcm_errno(&zcm));
             goto done;
         }
@@ -206,11 +206,11 @@ static void test_sub(void)
 
     /* can't unsubscribe */
     ENSURE(NULL != (sub=zcm_subscribe(&zcm, "CANNOT_UNSUB", NULL, NULL)));
-    ENSURE(-1 == zcm_unsubscribe(&zcm, sub));
+    ENSURE(!zcm_unsubscribe(&zcm, sub));
 
     /* all good */
     ENSURE(NULL != (sub=zcm_subscribe(&zcm, "ALL_GOOD", NULL, NULL)));
-    ENSURE(0 == zcm_unsubscribe(&zcm, sub));
+    ENSURE(zcm_unsubscribe(&zcm, sub));
 
     zcm_cleanup(&zcm);
 }

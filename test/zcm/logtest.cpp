@@ -12,14 +12,14 @@ int main(int argc, const char *argv[])
     event.eventnum   = 0;
     event.timestamp  = 1;
     event.channellen = testChannel.length();
-    event.channel    = (char*) testChannel.c_str();
+    event.channel    = (zchar_t*) testChannel.c_str();
     event.datalen    = testData.length();
-    event.data       = (void*) testData.c_str();
+    event.data       = (zuint8_t*) testData.c_str();
 
     zcm_eventlog_t *l = zcm_eventlog_create("testlog.log", "w");
     assert(l && "Failed to open log for writing");
     for (size_t i = 0; i < 100; ++i) {
-        assert(zcm_eventlog_write_event(l, &event) == 0 && "Unable to write log event to log");
+        assert(zcm_eventlog_write_event(l, &event) && "Unable to write log event to log");
         event.eventnum++;
         event.timestamp++;
     }

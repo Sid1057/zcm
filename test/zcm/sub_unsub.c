@@ -20,6 +20,7 @@ static int  retval = 0;
 static int  num_received = 0;
 static int  bytepacked_received = 0;
 static char data[NUM_DATA] = {'a', 'b', 'c', 'd', 'e'};
+
 static void generic_handler(const zcm_recv_buf_t *rbuf, const char *channel, void *usr)
 {
     vprintf("%" PRIi64 " - %s: ", rbuf->recv_utime, channel);
@@ -30,7 +31,7 @@ static void generic_handler(const zcm_recv_buf_t *rbuf, const char *channel, voi
         num_received++;
         size_t j;
         for (j = 0; j < NUM_DATA; ++j) {
-            if (rbuf->data[i] == data[j]) {
+            if (rbuf->data[i] == (zuint8_t) data[j]) {
                 bytepacked_received |= 1 << j;
             }
         }
@@ -89,7 +90,7 @@ int main(int argc, const char *argv[])
         num_received = 0;
         bytepacked_received = 0;
         zcm_sub_t *sub = zcm_subscribe(zcm, "TEST", generic_handler, NULL);
-        zcm_publish(zcm, "TEST", data, sizeof(char));
+        zcm_publish(zcm, "TEST", (zuint8_t*) data, sizeof(zuint8_t));
 
         // zmq sockets are documented as taking a small but perceptible amount of time
         // to actuall establish connection, so in order to actually receive messages
@@ -101,7 +102,7 @@ int main(int argc, const char *argv[])
 
         size_t j;
         for (j = 0; j < NUM_DATA; ++j) {
-            zcm_publish(zcm, "TEST", data+j, sizeof(char));
+            zcm_publish(zcm, "TEST", (zuint8_t*) data + j, sizeof(zuint8_t));
         }
 
         usleep(sleep_time);

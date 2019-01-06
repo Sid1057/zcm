@@ -33,7 +33,7 @@ static bool machineIsLittleEndian()
 do { \
     const decltype(V) vec = V; \
     typedef decltype(vec)::value_type primitive; \
-    int nbytes = sizeof(primitive) * vec.size(); \
+    zint32_t nbytes = sizeof(primitive) * vec.size(); \
  \
     decltype(V) vec0 = vec; \
     decltype(V) vec1 = vec; \
@@ -51,7 +51,7 @@ do { \
  \
     for (size_t i = 0; i < vec.size(); ++i) arr0[i] = (primitive) vec[i]; \
  \
-    assert_equals(__ ## CORETYPE ## _encoded_array_size(arr0, vec.size()), nbytes); \
+    assert_equals((zint32_t) __ ## CORETYPE ## _encoded_array_size(arr0, vec.size()), nbytes); \
  \
     arr1[0] = UNIQUE; \
     assert_equals(__ ## CORETYPE ## _encode_array(arr1, 1 * sizeof(primitive), \
@@ -84,7 +84,7 @@ do { \
                   nbytes); \
     for (size_t i = 0; i < vec.size(); ++i) assert_equals(arr2[i], vec[i]); \
  \
-    assert_equals(__ ## CORETYPE ## _clone_array(arr2, arr3, vec.size()), nbytes); \
+    assert_equals((zint32_t) __ ## CORETYPE ## _clone_array(arr2, arr3, vec.size()), nbytes); \
     for (size_t i = 0; i < vec.size(); ++i) assert_equals(arr3[i], vec[i]); \
  \
 } while(0)

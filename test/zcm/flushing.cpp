@@ -43,7 +43,7 @@ int main()
         // create, send, and destroy
         zcm_t *zcm = zcm_create("udpm://239.255.76.67:7667?ttl=0");
         assert(zcm);
-        zcm_publish(zcm, CHANNEL, &data, 1);
+        zcm_publish(zcm, CHANNEL, (zuint8_t*) &data, 1);
         zcm_flush(zcm);
         zcm_destroy(zcm);
     }

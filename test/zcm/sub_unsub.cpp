@@ -104,7 +104,7 @@ int main(int argc, const char *argv[])
         handler.num_received = 0;
         handler.bytepacked_received = 0;
         zcm::Subscription *sub = zcm.subscribe("TEST", &Handler::generic_handle, &handler);
-        zcm.publish("TEST", data, sizeof(char));
+        zcm.publish("TEST", (zuint8_t*) data, sizeof(zuint8_t));
 
         // zmq sockets are documented as taking a small but perceptible amount of time
         // to actuall establish connection, so in order to actually receive messages
@@ -115,7 +115,7 @@ int main(int argc, const char *argv[])
         zcm.start();
 
         for (size_t j = 0; j < NUM_DATA; ++j) {
-            zcm.publish("TEST", data+j, sizeof(char));
+            zcm.publish("TEST", (zuint8_t*) data + j, sizeof(zuint8_t));
         }
 
         usleep(sleep_time);

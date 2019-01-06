@@ -42,8 +42,8 @@ struct zcm_t
 /* ZCM Receive buffer for one message */
 struct zcm_recv_buf_t
 {
-    zint64_t  recv_utime;
-    zcm_t*   zcm;
+    zuint64_t recv_utime;
+    zcm_t*    zcm;
     zuint8_t* data; /* NOTE: do not free, the library manages this memory */
     zuint32_t data_size;
 };

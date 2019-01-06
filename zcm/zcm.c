@@ -39,7 +39,7 @@ zcm_t* zcm_create(const zchar_t* url)
 {
     zcm_t* z = zcm_malloc(sizeof(zcm_t));
     ZCM_ASSERT(z);
-    if (zcm_init(z, url) == -1) {
+    if (!zcm_init(z, url)) {
         zcm_free(z);
         return NULL;
     }
@@ -51,7 +51,7 @@ zcm_t* zcm_create_trans(zcm_trans_t* zt)
 {
     zcm_t* z = zcm_malloc(sizeof(zcm_t));
     ZCM_ASSERT(z);
-    if (zcm_init_trans(z, zt) == -1) {
+    if (!zcm_init_trans(z, zt)) {
         zcm_free(z);
         return NULL;
     }
@@ -101,7 +101,12 @@ zbool_t zcm_init(zcm_t* zcm, const zchar_t* url)
 
 zbool_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
 {
-    if (zt == NULL) goto fail;
+    if (zt == NULL) {
+        zcm->type = ZCM_NONBLOCKING;
+        zcm->impl = NULL;
+        zcm->err = ZCM_EINVALID;
+        return zfalse;
+    }
 
 #ifndef ZCM_EMBEDDED
     if (zt->trans_type == ZCM_BLOCKING) {
@@ -118,12 +123,6 @@ zbool_t zcm_init_trans(zcm_t* zcm, zcm_trans_t* zt)
     ZCM_ASSERT(zcm->impl);
     zcm->err = ZCM_EOK;
     return ztrue;
-
- fail:
-    zcm->type = ZCM_NONBLOCKING;
-    zcm->impl = NULL;
-    zcm->err = ZCM_EINVALID;
-    return zfalse;
 }
 
 void zcm_cleanup(zcm_t* zcm)
@@ -164,12 +163,12 @@ zbool_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zu
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_publish(zcm->impl, channel, data, len);
-        return zcm->err == 0;
+        return zcm->err == ZCM_EOK;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_publish(zcm->impl, channel, data, len);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }
 
 void zcm_flush(zcm_t* zcm)
@@ -187,7 +186,7 @@ zbool_t zcm_try_flush(zcm_t* zcm)
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_try_flush(zcm->impl);
-        return zcm->err == 0;
+        return zcm->err == ZCM_EOK;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
@@ -220,12 +219,12 @@ zbool_t zcm_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_unsubscribe(zcm->impl, sub);
-        return zcm->err == 0;
+        return zcm->err == ZCM_EOK;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_unsubscribe(zcm->impl, sub);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }
 
 zbool_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
@@ -233,12 +232,12 @@ zbool_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub)
 #ifndef ZCM_EMBEDDED
     if (zcm->type == ZCM_BLOCKING) {
         zcm->err = zcm_blocking_try_unsubscribe(zcm->impl, sub);
-        return zcm->err == 0;
+        return zcm->err == ZCM_EOK;
     }
 #endif
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_unsubscribe(zcm->impl, sub);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }
 
 #ifndef ZCM_EMBEDDED
@@ -262,7 +261,7 @@ zbool_t zcm_try_stop(zcm_t* zcm)
 {
     ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
     zcm->err = zcm_blocking_try_stop(zcm->impl);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }
 #endif
 
@@ -295,7 +294,7 @@ zbool_t zcm_handle(zcm_t* zcm)
 {
     ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
     zcm->err = zcm_blocking_handle(zcm->impl);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }
 #endif
 
@@ -312,7 +311,7 @@ zbool_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs)
 {
     ZCM_ASSERT(zcm->type == ZCM_BLOCKING);
     zcm->err = zcm_blocking_try_set_queue_size(zcm->impl, numMsgs);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }
 #endif
 
@@ -320,5 +319,5 @@ zbool_t zcm_handle_nonblock(zcm_t* zcm)
 {
     ZCM_ASSERT(zcm->type == ZCM_NONBLOCKING);
     zcm->err = zcm_nonblocking_handle(zcm->impl);
-    return zcm->err == 0;
+    return zcm->err == ZCM_EOK;
 }

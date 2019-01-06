@@ -36,9 +36,9 @@ void pub(zcm_t *zcm)
     usleep(100000);
 
     char data = 'd';
-    zcm_publish(zcm, CHANNEL, &data, 1);
+    zcm_publish(zcm, CHANNEL, (zuint8_t*) &data, 1);
     usleep(200000);
-    zcm_publish(zcm, CHANNEL, &data, 1);
+    zcm_publish(zcm, CHANNEL, (zuint8_t*) &data, 1);
     usleep(10000);
 }
 

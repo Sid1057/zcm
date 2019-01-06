@@ -38,7 +38,7 @@ void pub(zcm_t *zcm)
     usleep(100000);
 
     char data = 'd';
-    zcm_publish(zcm, CHANNEL, &data, 1);
+    zcm_publish(zcm, CHANNEL, (zuint8_t*) &data, 1);
     usleep(10000);
 }
 
@@ -79,7 +79,7 @@ void test2()
     // Try publishing once. This may start a thread, but a zcm_stop() before a fork
     // should be okay.
     char data = 'd';
-    zcm_publish(zcm, CHANNEL, &data, 1);
+    zcm_publish(zcm, CHANNEL, (zuint8_t*) &data, 1);
     zcm_stop(zcm);
 
     pid_t pid;

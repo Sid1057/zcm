@@ -18,7 +18,7 @@ static void handler(const zcm_recv_buf_t *rbuf, const char *channel, void *usr)
 
 int main(int argc, char *argv[])
 {
-    char *data = malloc(DATASZ);
+    char *data = zcm_malloc(DATASZ);
     memset(data, 0, DATASZ);
 
     zcm_t *zcm = zcm_create(URL);
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     zcm_start(zcm);
 
     for (size_t i = 0; i < N; i++) {
-        zcm_publish(zcm, CHANNEL, data, DATASZ);
+        zcm_publish(zcm, CHANNEL, (zuint8_t*) data, DATASZ);
         usleep(SLEEPUS);
     }
 

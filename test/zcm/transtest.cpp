@@ -39,7 +39,7 @@ static zcm_msg_t makeMasterMsg()
     msg.utime = TimeUtil::utime();
     msg.channel = "FOO";
     msg.len = BIG_MESSAGE ? 500000 : 1000;
-    msg.buf = (char*) malloc(msg.len);
+    msg.buf = (zuint8_t*) zcm_malloc(msg.len);
     for (size_t i = 0; i < msg.len; i++)
         msg.buf[i] = (char)(i & 0xff);
 

@@ -266,7 +266,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         return ZCM_EUNKNOWN;
     }
 
-    zcm_retcode_t recvmsgEnable(const char *channel, bool enable)
+    zcm_retcode_t recvmsgEnable(const zchar_t *channel, zbool_t enable)
     {
         // Mutex used to protect 'subsocks' while allowing
         // recvmsgEnable() and recvmsg() to be called
