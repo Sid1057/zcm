@@ -16,8 +16,8 @@ void               zcm_nonblocking_destroy(zcm_nonblocking_t* zcm);
 zcm_retcode_t zcm_nonblocking_publish(zcm_nonblocking_t* zcm, const zchar_t* channel,
                                       const zuint8_t* data, zuint32_t len);
 
-zcm_sub_t* zcm_nonblocking_subscribe(zcm_nonblocking_t* zcm, const zchar_t* channel,
-                                     zcm_msg_handler_t cb, void* usr);
+zcm_sub_t*    zcm_nonblocking_subscribe(zcm_nonblocking_t* zcm, const zchar_t* channel,
+                                        zcm_msg_handler_t cb, void* usr);
 
 zcm_retcode_t zcm_nonblocking_unsubscribe(zcm_nonblocking_t* zcm, zcm_sub_t* sub);
 

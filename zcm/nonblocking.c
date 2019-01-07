@@ -16,7 +16,7 @@ struct zcm_nonblocking
     /* TODO speed this up */
     zcm_sub_t subs[ZCM_NONBLOCK_SUBS_MAX];
     zbool_t   subInUse[ZCM_NONBLOCK_SUBS_MAX];
-    zsize_t  subInUseEnd;
+    zsize_t   subInUseEnd;
 };
 
 static zbool_t isRegexChannel(const zchar_t* c, zsize_t clen)
@@ -167,6 +167,8 @@ static void dispatch_message(zcm_nonblocking_t* zcm, zcm_msg_t* msg)
     for (i = 0; i < zcm->subInUseEnd; ++i) {
         if (!zcm->subInUse[i]) continue;
 
+        /* RRR: need to use zsize_t, we'll have to go through
+         *      and carefully check for stuff like this */
         size_t subsChanLen = strlen(zcm->subs[i].channel);
         if (isRegexChannel(zcm->subs[i].channel, subsChanLen)) {
             size_t msgLen = strlen(msg->channel);

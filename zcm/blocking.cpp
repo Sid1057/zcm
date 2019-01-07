@@ -497,6 +497,7 @@ zcm_retcode_t zcm_blocking_t::unsubscribe(zcm_sub_t* sub, zbool_t block)
 
 zcm_retcode_t zcm_blocking_t::flush(zbool_t block)
 {
+    /* RRR: why change to zuint32_t instead of zsize_t */
     zuint32_t n;
 
     {
@@ -817,7 +818,7 @@ void zcm_blocking_flush(zcm_blocking_t* zcm)
     zcm->flush(ztrue);
 }
 
-zcm_retcode_t  zcm_blocking_try_flush(zcm_blocking_t* zcm)
+zcm_retcode_t zcm_blocking_try_flush(zcm_blocking_t* zcm)
 {
     return zcm->flush(zfalse);
 }
@@ -847,7 +848,7 @@ void zcm_blocking_stop(zcm_blocking_t* zcm)
     zcm->stop(ztrue);
 }
 
-zcm_retcode_t  zcm_blocking_try_stop(zcm_blocking_t* zcm)
+zcm_retcode_t zcm_blocking_try_stop(zcm_blocking_t* zcm)
 {
     return zcm->stop(zfalse);
 }
@@ -862,7 +863,7 @@ void zcm_blocking_set_queue_size(zcm_blocking_t* zcm, zuint32_t sz)
     zcm->setQueueSize(sz, ztrue);
 }
 
-zcm_retcode_t  zcm_blocking_try_set_queue_size(zcm_blocking_t* zcm, zuint32_t sz)
+zcm_retcode_t zcm_blocking_try_set_queue_size(zcm_blocking_t* zcm, zuint32_t sz)
 {
     return zcm->setQueueSize(sz, zfalse);
 }

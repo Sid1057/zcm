@@ -49,7 +49,7 @@ struct zcm_recv_buf_t
 };
 
 #ifndef ZCM_EMBEDDED
-enum zcm_return_codes zcm_retcode_name_to_enum(const zchar_t* zcm_retcode_name);
+zcm_retcode_t zcm_retcode_name_to_enum(const zchar_t* zcm_retcode_name);
 #endif
 
 /* Standard create/destroy functions. These will malloc() and free() the zcm_t object.

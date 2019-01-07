@@ -18,8 +18,8 @@ extern "C" {
 typedef struct ___zcm_hash_ptr __zcm_hash_ptr;
 struct ___zcm_hash_ptr
 {
-    const __zcm_hash_ptr *parent;
-    void *v;
+    const __zcm_hash_ptr* parent;
+    void* v;
 };
 
 /**
@@ -40,43 +40,47 @@ struct ___zcm_hash_ptr
 #define __byte_hash_recursive(p) 0
 #define __byte_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __byte_encoded_array_size(const zuint8_t *p, zuint32_t elements)
+static inline zuint32_t __byte_encoded_array_size(const zuint8_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_INT8_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __byte_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zuint8_t *p, zuint32_t elements)
+static inline zint32_t __byte_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zuint8_t* p, zuint32_t elements)
 {
     if (maxlen < elements) return -1;
 
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     memcpy(&buf[offset], p, elements);
 
+    /* RRR: I'm guessing this isn't a new issue, but "elements" is a uint32 while your return type
+     *      is int32, so for very large encodes, you'll get unintentional behavior.
+     *      Applies to all "encode_array" functions
+     */
     return elements;
 }
 
-static inline zint32_t __byte_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zuint8_t *p, zuint32_t elements)
+static inline zint32_t __byte_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zuint8_t* p, zuint32_t elements)
 {
     if (maxlen < elements) return -1;
 
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     memcpy(p, &buf[offset], elements);
 
     return elements;
 }
 
-static inline zint32_t __byte_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zuint8_t *p, zuint32_t elements)
+static inline zint32_t __byte_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zuint8_t* p, zuint32_t elements)
 {
     return __byte_encode_array(_buf, offset, maxlen, p, elements);
 }
 
-static inline zint32_t __byte_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zuint8_t *p, zuint32_t elements)
+static inline zint32_t __byte_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zuint8_t* p, zuint32_t elements)
 {
     return __byte_decode_array(_buf, offset, maxlen, p, elements);
 }
 
-static inline zuint32_t __byte_clone_array(const zuint8_t *p, zuint8_t *q, zuint32_t elements)
+static inline zuint32_t __byte_clone_array(const zuint8_t* p, zuint8_t* q, zuint32_t elements)
 {
     // Intentionally not using ZCM_CORETYPES_INT8_NUM_BYTES_ON_BUS
     zuint32_t n = elements * sizeof(zuint8_t);
@@ -90,44 +94,47 @@ static inline zuint32_t __byte_clone_array(const zuint8_t *p, zuint8_t *q, zuint
 #define __int8_t_hash_recursive(p) 0
 #define __int8_t_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __int8_t_encoded_array_size(const zint8_t *p, zuint32_t elements)
+static inline zuint32_t __int8_t_encoded_array_size(const zint8_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_INT8_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __int8_t_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint8_t *p, zuint32_t elements)
+static inline zint32_t __int8_t_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint8_t* p, zuint32_t elements)
 {
     if (maxlen < elements) return -1;
 
-    zint8_t *buf = (zint8_t*) _buf;
+    zint8_t* buf = (zint8_t*) _buf;
     memcpy(&buf[offset], p, elements);
 
     return elements;
 }
 
-static inline zint32_t __int8_t_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint8_t *p, zuint32_t elements)
+static inline zint32_t __int8_t_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint8_t* p, zuint32_t elements)
 {
     if (maxlen < elements) return -1;
 
-    zint8_t *buf = (zint8_t*) _buf;
+    zint8_t* buf = (zint8_t*) _buf;
     memcpy(p, &buf[offset], elements);
 
     return elements;
 }
 
-static inline zint32_t __int8_t_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint8_t *p, zuint32_t elements)
+static inline zint32_t __int8_t_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint8_t* p, zuint32_t elements)
 {
     return __int8_t_encode_array(_buf, offset, maxlen, p, elements);
 }
 
-static inline zint32_t __int8_t_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint8_t *p, zuint32_t elements)
+static inline zint32_t __int8_t_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint8_t* p, zuint32_t elements)
 {
     return __int8_t_decode_array(_buf, offset, maxlen, p, elements);
 }
 
-static inline zuint32_t __int8_t_clone_array(const zint8_t *p, zint8_t *q, zuint32_t elements)
+static inline zuint32_t __int8_t_clone_array(const zint8_t* p, zint8_t* q, zuint32_t elements)
 {
+    /* RRR: I think it's a good idea to put "Intentionally not using ZCM_CORETYPES_..."
+     *      in all these clone_array functions, just for posterity
+     */
     zuint32_t n = elements * sizeof(zint8_t);
     memcpy(q, p, n);
     return n;
@@ -139,16 +146,16 @@ static inline zuint32_t __int8_t_clone_array(const zint8_t *p, zint8_t *q, zuint
 #define __int16_t_hash_recursive(p) 0
 #define __int16_t_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __int16_t_encoded_array_size(const zint16_t *p, zuint32_t elements)
+static inline zuint32_t __int16_t_encoded_array_size(const zint16_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_INT16_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __int16_t_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint16_t *p, zuint32_t elements)
+static inline zint32_t __int16_t_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint16_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT16_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -163,10 +170,10 @@ static inline zint32_t __int16_t_encode_array(void *_buf, zuint32_t offset, zuin
     return total_size;
 }
 
-static inline zint32_t __int16_t_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint16_t *p, zuint32_t elements)
+static inline zint32_t __int16_t_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint16_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT16_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -180,10 +187,10 @@ static inline zint32_t __int16_t_decode_array(const void *_buf, zuint32_t offset
     return total_size;
 }
 
-static inline zint32_t __int16_t_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint16_t *p, zuint32_t elements)
+static inline zint32_t __int16_t_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint16_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT16_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -198,10 +205,10 @@ static inline zint32_t __int16_t_encode_little_endian_array(void *_buf, zuint32_
     return total_size;
 }
 
-static inline zint32_t __int16_t_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint16_t *p, zuint32_t elements)
+static inline zint32_t __int16_t_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint16_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT16_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -209,13 +216,13 @@ static inline zint32_t __int16_t_decode_little_endian_array(const void *_buf, zu
 
     for (element = 0; element < elements; ++element) {
         p[element] = (buf[pos+1]<<8) + buf[pos];
-        pos+=2;
+        pos += 2;
     }
 
     return total_size;
 }
 
-static inline zuint32_t __int16_t_clone_array(const zint16_t *p, zint16_t *q, zuint32_t elements)
+static inline zuint32_t __int16_t_clone_array(const zint16_t* p, zint16_t* q, zuint32_t elements)
 {
     zuint32_t n = elements * sizeof(zint16_t);
     memcpy(q, p, n);
@@ -228,16 +235,16 @@ static inline zuint32_t __int16_t_clone_array(const zint16_t *p, zint16_t *q, zu
 #define __int32_t_hash_recursive(p) 0
 #define __int32_t_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __int32_t_encoded_array_size(const zint32_t *p, zuint32_t elements)
+static inline zuint32_t __int32_t_encoded_array_size(const zint32_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_INT32_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __int32_t_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint32_t *p, zuint32_t elements)
+static inline zint32_t __int32_t_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT32_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -254,10 +261,10 @@ static inline zint32_t __int32_t_encode_array(void *_buf, zuint32_t offset, zuin
     return total_size;
 }
 
-static inline zint32_t __int32_t_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint32_t *p, zuint32_t elements)
+static inline zint32_t __int32_t_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT32_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -268,16 +275,16 @@ static inline zint32_t __int32_t_decode_array(const void *_buf, zuint32_t offset
                      (((zuint32_t)buf[pos+1])<<16) +
                      (((zuint32_t)buf[pos+2])<<8) +
                       ((zuint32_t)buf[pos+3]);
-        pos+=4;
+        pos += 4;
     }
 
     return total_size;
 }
 
-static inline zint32_t __int32_t_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint32_t *p, zuint32_t elements)
+static inline zint32_t __int32_t_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT32_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -294,10 +301,10 @@ static inline zint32_t __int32_t_encode_little_endian_array(void *_buf, zuint32_
     return total_size;
 }
 
-static inline zint32_t __int32_t_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint32_t *p, zuint32_t elements)
+static inline zint32_t __int32_t_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT32_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -305,16 +312,16 @@ static inline zint32_t __int32_t_decode_little_endian_array(const void *_buf, zu
 
     for (element = 0; element < elements; ++element) {
         p[element] = (((zuint32_t)buf[pos+3])<<24) +
-                      (((zuint32_t)buf[pos+2])<<16) +
-                      (((zuint32_t)buf[pos+1])<<8) +
-                       ((zuint32_t)buf[pos+0]);
-        pos+=4;
+                     (((zuint32_t)buf[pos+2])<<16) +
+                     (((zuint32_t)buf[pos+1])<<8) +
+                      ((zuint32_t)buf[pos+0]);
+        pos += 4;
     }
 
     return total_size;
 }
 
-static inline zuint32_t __int32_t_clone_array(const zint32_t *p, zint32_t *q, zuint32_t elements)
+static inline zuint32_t __int32_t_clone_array(const zint32_t* p, zint32_t* q, zuint32_t elements)
 {
     zuint32_t n = elements * sizeof(zint32_t);
     memcpy(q, p, n);
@@ -327,16 +334,16 @@ static inline zuint32_t __int32_t_clone_array(const zint32_t *p, zint32_t *q, zu
 #define __int64_t_hash_recursive(p) 0
 #define __int64_t_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __int64_t_encoded_array_size(const zint64_t *p, zuint32_t elements)
+static inline zuint32_t __int64_t_encoded_array_size(const zint64_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_INT64_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __int64_t_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint64_t *p, zuint32_t elements)
+static inline zint32_t __int64_t_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT64_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -357,10 +364,10 @@ static inline zint32_t __int64_t_encode_array(void *_buf, zuint32_t offset, zuin
     return total_size;
 }
 
-static inline zint32_t __int64_t_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint64_t *p, zuint32_t elements)
+static inline zint32_t __int64_t_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT64_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -368,25 +375,25 @@ static inline zint32_t __int64_t_decode_array(const void *_buf, zuint32_t offset
 
     for (element = 0; element < elements; ++element) {
         zuint64_t a = (((zuint32_t)buf[pos+0])<<24) +
-                     (((zuint32_t)buf[pos+1])<<16) +
-                     (((zuint32_t)buf[pos+2])<<8) +
-                      ((zuint32_t)buf[pos+3]);
-        pos+=4;
+                      (((zuint32_t)buf[pos+1])<<16) +
+                      (((zuint32_t)buf[pos+2])<<8) +
+                       ((zuint32_t)buf[pos+3]);
+        pos += 4;
         zuint64_t b = (((zuint32_t)buf[pos+0])<<24) +
-                     (((zuint32_t)buf[pos+1])<<16) +
-                     (((zuint32_t)buf[pos+2])<<8) +
-                      ((zuint32_t)buf[pos+3]);
-        pos+=4;
+                      (((zuint32_t)buf[pos+1])<<16) +
+                      (((zuint32_t)buf[pos+2])<<8) +
+                       ((zuint32_t)buf[pos+3]);
+        pos += 4;
         p[element] = (a<<32) + (b&0xffffffff);
     }
 
     return total_size;
 }
 
-static inline zint32_t __int64_t_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zint64_t *p, zuint32_t elements)
+static inline zint32_t __int64_t_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zint64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT64_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -407,10 +414,10 @@ static inline zint32_t __int64_t_encode_little_endian_array(void *_buf, zuint32_
     return total_size;
 }
 
-static inline zint32_t __int64_t_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zint64_t *p, zuint32_t elements)
+static inline zint32_t __int64_t_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zint64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_INT64_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
 
@@ -418,22 +425,22 @@ static inline zint32_t __int64_t_decode_little_endian_array(const void *_buf, zu
 
     for (element = 0; element < elements; ++element) {
         zuint64_t b = (((zuint32_t)buf[pos+3])<<24) +
-                     (((zuint32_t)buf[pos+2])<<16) +
-                     (((zuint32_t)buf[pos+1])<<8) +
-                      ((zuint32_t)buf[pos+0]);
-        pos+=4;
+                      (((zuint32_t)buf[pos+2])<<16) +
+                      (((zuint32_t)buf[pos+1])<<8) +
+                       ((zuint32_t)buf[pos+0]);
+        pos += 4;
         zuint64_t a = (((zuint32_t)buf[pos+3])<<24) +
-                     (((zuint32_t)buf[pos+2])<<16) +
-                     (((zuint32_t)buf[pos+1])<<8) +
-                      ((zuint32_t)buf[pos+0]);
-        pos+=4;
+                      (((zuint32_t)buf[pos+2])<<16) +
+                      (((zuint32_t)buf[pos+1])<<8) +
+                       ((zuint32_t)buf[pos+0]);
+        pos += 4;
         p[element] = (a<<32) + (b&0xffffffff);
     }
 
     return total_size;
 }
 
-static inline zuint32_t __int64_t_clone_array(const zint64_t *p, zint64_t *q, zuint32_t elements)
+static inline zuint32_t __int64_t_clone_array(const zint64_t* p, zint64_t* q, zuint32_t elements)
 {
     zuint32_t n = elements * sizeof(zint64_t);
     memcpy(q, p, n);
@@ -443,27 +450,27 @@ static inline zuint32_t __int64_t_clone_array(const zint64_t *p, zint64_t *q, zu
 /**
  * FLOAT
  */
-typedef union __cm__float_zuint32_t {
+typedef union __zcm__float_uint32_t {
     zfloat32_t zflt32;
     zuint32_t zuint32;
-} __cm__float_zuint32_t;
+} __zcm__float_uint32_t;
 
 #define __float_hash_recursive(p) 0
 #define __float_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __float_encoded_array_size(const zfloat32_t *p, zuint32_t elements)
+static inline zuint32_t __float_encoded_array_size(const zfloat32_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_FLOAT_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __float_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zfloat32_t *p, zuint32_t elements)
+static inline zint32_t __float_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zfloat32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_FLOAT_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__float_zuint32_t tmp;
+    __zcm__float_uint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -478,13 +485,13 @@ static inline zint32_t __float_encode_array(void *_buf, zuint32_t offset, zuint3
     return total_size;
 }
 
-static inline zint32_t __float_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zfloat32_t *p, zuint32_t elements)
+static inline zint32_t __float_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zfloat32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_FLOAT_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__float_zuint32_t tmp;
+    __zcm__float_uint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -500,13 +507,13 @@ static inline zint32_t __float_decode_array(const void *_buf, zuint32_t offset, 
     return total_size;
 }
 
-static inline zint32_t __float_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zfloat32_t *p, zuint32_t elements)
+static inline zint32_t __float_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zfloat32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_FLOAT_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__float_zuint32_t tmp;
+    __zcm__float_uint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -521,13 +528,13 @@ static inline zint32_t __float_encode_little_endian_array(void *_buf, zuint32_t 
     return total_size;
 }
 
-static inline zint32_t __float_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zfloat32_t *p, zuint32_t elements)
+static inline zint32_t __float_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zfloat32_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_FLOAT_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__float_zuint32_t tmp;
+    __zcm__float_uint32_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -543,7 +550,7 @@ static inline zint32_t __float_decode_little_endian_array(const void *_buf, zuin
     return total_size;
 }
 
-static inline zuint32_t __float_clone_array(const zfloat32_t *p, zfloat32_t *q, zuint32_t elements)
+static inline zuint32_t __float_clone_array(const zfloat32_t* p, zfloat32_t* q, zuint32_t elements)
 {
     zuint32_t n = elements * sizeof(zfloat32_t);
     memcpy(q, p, n);
@@ -553,27 +560,27 @@ static inline zuint32_t __float_clone_array(const zfloat32_t *p, zfloat32_t *q, 
 /**
  * DOUBLE
  */
-typedef union __cm__double_zuint64_t {
+typedef union __zcm__double_uint64_t {
     zfloat64_t zfloat64;
     zuint64_t zuint64;
-} __cm__double_zuint64_t;
+} __zcm__double_uint64_t;
 
 #define __double_hash_recursive(p) 0
 #define __double_decode_array_cleanup(p, sz) {}
 
-static inline zuint32_t __double_encoded_array_size(const zfloat64_t *p, zuint32_t elements)
+static inline zuint32_t __double_encoded_array_size(const zfloat64_t* p, zuint32_t elements)
 {
     (void)p;
     return ZCM_CORETYPES_DOUBLE_NUM_BYTES_ON_BUS * elements;
 }
 
-static inline zint32_t __double_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zfloat64_t *p, zuint32_t elements)
+static inline zint32_t __double_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zfloat64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_DOUBLE_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__double_zuint64_t tmp;
+    __zcm__double_uint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -592,17 +599,20 @@ static inline zint32_t __double_encode_array(void *_buf, zuint32_t offset, zuint
     return total_size;
 }
 
-static inline zint32_t __double_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zfloat64_t *p, zuint32_t elements)
+static inline zint32_t __double_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zfloat64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_DOUBLE_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__double_zuint64_t tmp;
+    __zcm__double_uint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
     for (element = 0; element < elements; ++element) {
+        /* RRR: why are we doing it like this? I'm getting a weird deja vu sense that it was
+         *      for a good reason, but I can't remember
+         */
         zuint64_t a = (((zuint32_t) buf[pos + 0]) << 24) +
                       (((zuint32_t) buf[pos + 1]) << 16) +
                       (((zuint32_t) buf[pos + 2]) <<  8) +
@@ -620,13 +630,13 @@ static inline zint32_t __double_decode_array(const void *_buf, zuint32_t offset,
     return total_size;
 }
 
-static inline zint32_t __double_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, const zfloat64_t *p, zuint32_t elements)
+static inline zint32_t __double_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, const zfloat64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_DOUBLE_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__double_zuint64_t tmp;
+    __zcm__double_uint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -645,13 +655,13 @@ static inline zint32_t __double_encode_little_endian_array(void *_buf, zuint32_t
     return total_size;
 }
 
-static inline zint32_t __double_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zfloat64_t *p, zuint32_t elements)
+static inline zint32_t __double_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zfloat64_t* p, zuint32_t elements)
 {
     zuint32_t total_size = ZCM_CORETYPES_DOUBLE_NUM_BYTES_ON_BUS * elements;
-    zuint8_t *buf = (zuint8_t*) _buf;
+    zuint8_t* buf = (zuint8_t*) _buf;
     zuint32_t pos = offset;
     zuint32_t element;
-    __cm__double_zuint64_t tmp;
+    __zcm__double_uint64_t tmp;
 
     if (maxlen < total_size) return -1;
 
@@ -673,7 +683,7 @@ static inline zint32_t __double_decode_little_endian_array(const void *_buf, zui
     return total_size;
 }
 
-static inline zuint32_t __double_clone_array(const zfloat64_t *p, zfloat64_t *q, zuint32_t elements)
+static inline zuint32_t __double_clone_array(const zfloat64_t* p, zfloat64_t* q, zuint32_t elements)
 {
     zuint32_t n = elements * sizeof(zfloat64_t);
     memcpy(q, p, n);
@@ -685,14 +695,14 @@ static inline zuint32_t __double_clone_array(const zfloat64_t *p, zfloat64_t *q,
  */
 #define __string_hash_recursive(p) 0
 
-static inline void __string_decode_array_cleanup(char **s, zuint32_t elements)
+static inline void __string_decode_array_cleanup(char** s, zuint32_t elements)
 {
     zuint32_t element;
     for (element = 0; element < elements; ++element)
         zcm_free(s[element]);
 }
 
-static inline zuint32_t __string_encoded_array_size(zchar_t * const *s, zuint32_t elements)
+static inline zuint32_t __string_encoded_array_size(zchar_t* const* s, zuint32_t elements)
 {
     zuint32_t size = 0;
 
@@ -706,7 +716,7 @@ static inline zuint32_t __string_encoded_array_size(zchar_t * const *s, zuint32_
     return size;
 }
 
-static inline zint32_t __string_encode_array(void *_buf, zuint32_t offset, zuint32_t maxlen, zchar_t * const *p, zuint32_t elements)
+static inline zint32_t __string_encode_array(void* _buf, zuint32_t offset, zuint32_t maxlen, zchar_t* const* p, zuint32_t elements)
 {
     zuint32_t pos = 0;
     zuint32_t element;
@@ -725,7 +735,7 @@ static inline zint32_t __string_encode_array(void *_buf, zuint32_t offset, zuint
     return pos;
 }
 
-static inline zint32_t __string_decode_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zchar_t **p, zuint32_t elements)
+static inline zint32_t __string_decode_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zchar_t** p, zuint32_t elements)
 {
     zuint32_t pos = 0;
     zuint32_t element;
@@ -746,7 +756,7 @@ static inline zint32_t __string_decode_array(const void *_buf, zuint32_t offset,
     return pos;
 }
 
-static inline zint32_t __string_encode_little_endian_array(void *_buf, zuint32_t offset, zuint32_t maxlen, zchar_t * const *p, zuint32_t elements)
+static inline zint32_t __string_encode_little_endian_array(void* _buf, zuint32_t offset, zuint32_t maxlen, zchar_t* const* p, zuint32_t elements)
 {
     zuint32_t pos = 0;
     zuint32_t element;
@@ -765,7 +775,7 @@ static inline zint32_t __string_encode_little_endian_array(void *_buf, zuint32_t
     return pos;
 }
 
-static inline zint32_t __string_decode_little_endian_array(const void *_buf, zuint32_t offset, zuint32_t maxlen, zchar_t **p, zuint32_t elements)
+static inline zint32_t __string_decode_little_endian_array(const void* _buf, zuint32_t offset, zuint32_t maxlen, zchar_t** p, zuint32_t elements)
 {
     zuint32_t pos = 0;
     zuint32_t element;
@@ -786,7 +796,7 @@ static inline zint32_t __string_decode_little_endian_array(const void *_buf, zui
     return pos;
 }
 
-static inline zuint32_t __string_clone_array(zchar_t * const *p, zchar_t **q, zuint32_t elements)
+static inline zuint32_t __string_clone_array(zchar_t* const* p, zchar_t** q, zuint32_t elements)
 {
     zuint32_t ret = 0;
     zuint32_t element;
@@ -827,7 +837,7 @@ struct _zcm_field_t
     /**
      * name of the field
      */
-    const zchar_t *name;
+    const zchar_t* name;
 
     /**
      * datatype of the field
@@ -838,7 +848,7 @@ struct _zcm_field_t
      * datatype of the field (in string format)
      * this should be the same as in the zcm type decription file
      */
-    const zchar_t *typestr;
+    const zchar_t* typestr;
 
     /**
      * number of array dimensions
@@ -860,16 +870,16 @@ struct _zcm_field_t
     /**
      * a data pointer to the start of this field
      */
-    void *data;
+    void* data;
 };
 
-typedef zint32_t    (*zcm_encode_t)(void *buf, zuint32_t offset, zuint32_t maxlen, const void *p);
-typedef zint32_t    (*zcm_decode_t)(const void *buf, zuint32_t offset, zuint32_t maxlen, void *p);
-typedef zint32_t    (*zcm_decode_cleanup_t)(void *p);
-typedef zuint32_t   (*zcm_encoded_size_t)(const void *p);
+typedef zint32_t    (*zcm_encode_t)(void* buf, zuint32_t offset, zuint32_t maxlen, const void* p);
+typedef zint32_t    (*zcm_decode_t)(const void* buf, zuint32_t offset, zuint32_t maxlen, void* p);
+typedef zint32_t    (*zcm_decode_cleanup_t)(void* p);
+typedef zuint32_t   (*zcm_encoded_size_t)(const void* p);
 typedef zuint32_t   (*zcm_struct_size_t)(void);
 typedef zuint32_t   (*zcm_num_fields_t)(void);
-typedef zint32_t    (*zcm_get_field_t)(const void *p, zuint32_t i, zcm_field_t *f);
+typedef zint32_t    (*zcm_get_field_t)(const void* p, zuint32_t i, zcm_field_t* f);
 typedef zint64_t    (*zcm_get_hash_t)(void);
 
 /**
