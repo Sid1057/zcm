@@ -3,7 +3,6 @@
 
 #include "zcm/zcm_base_types.h"
 
-#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {

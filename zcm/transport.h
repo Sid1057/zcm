@@ -123,7 +123,7 @@
  *         Internally, the vtbl field should be set to the appropriate
  *         table of function pointers.
  *
- *      size_t getmtu(zcm_trans_t* zt)
+ *      zuint32_t getmtu(zcm_trans_t* zt)
  *      --------------------------------------------------------------------
  *         Returns the Maximum Transmission Unit supported by this transport
  *         The transport is allowed to ignore any message above this size

@@ -18,20 +18,20 @@ using namespace std;
 
 atomic_int callbackTriggered {0};
 
-constexpr double periodExpected = 1e3;
-constexpr double noiseStdDev = periodExpected / 30;
+constexpr zfloat64_t periodExpected = 1e3;
+constexpr zfloat64_t noiseStdDev = periodExpected / 30;
 
-static void callback(example_t* msg, uint64_t utime, void* usr)
+static void callback(example_t* msg, zuint64_t utime, void* usr)
 {
     callbackTriggered++;
     delete msg;
 }
-static constexpr uint32_t maxBufSize = 1e5;
-static std::deque<uint8_t> buf;
+static constexpr zuint32_t maxBufSize = 1e5;
+static std::deque<zuint8_t> buf;
 
 static std::random_device rd;
 static std::minstd_rand gen(rd());
-static std::normal_distribution<double> dist(0.0, noiseStdDev);
+static std::normal_distribution<zfloat64_t> dist(0.0, noiseStdDev);
 
 zuint32_t get(zuint8_t* data, zuint32_t nData, void* usr)
 {
@@ -55,9 +55,9 @@ zuint32_t put(const zuint8_t* data, zuint32_t nData, void* usr)
 
 zuint64_t timestamp_now(void* usr)
 {
-    static uint64_t i = 100;
-    static uint64_t j = 0;
-    static bool shouldIncrement = true;
+    static zuint64_t i = 100;
+    static zuint64_t j = 0;
+    static zbool_t shouldIncrement = ztrue;
     if (shouldIncrement) {
         j++;
         i += periodExpected + dist(gen);
@@ -68,7 +68,7 @@ zuint64_t timestamp_now(void* usr)
 
 int main(int argc, char *argv[])
 {
-    constexpr size_t numMsgs = 500;
+    constexpr zsize_t numMsgs = 500;
 
     zcm_trans_t* trans = zcm_trans_generic_serial_create(get, put, NULL, timestamp_now,
                                                          NULL, MTU, MTU * 5);
@@ -78,11 +78,11 @@ int main(int argc, char *argv[])
 
     example_t msg = {};
 
-    size_t nTimesJitterWasRight = 0, nTimesHzWasRight = 0;
+    zsize_t nTimesJitterWasRight = 0, nTimesHzWasRight = 0;
 
-    uint64_t now[numMsgs];
-    for (size_t i = 0; i < numMsgs; ++i) {
-        now[i] = (uint64_t) (i * periodExpected);
+    zuint64_t now[numMsgs];
+    for (zsize_t i = 0; i < numMsgs; ++i) {
+        now[i] = (zuint64_t) (i * periodExpected);
         msg.utime = now[i];
         zcmLocal.publish("EXAMPLE", &msg);
         zcmLocal.flush();
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
     example_t* recv = mt.get(now[3]);
     assert(recv);
-    assert((uint64_t)recv->utime >= now[2] && (uint64_t)recv->utime <= now[4]);
+    assert((zuint64_t)recv->utime >= now[2] && (zuint64_t)recv->utime <= now[4]);
     delete recv;
 
     assert(nTimesJitterWasRight > 0.5 * numMsgs);

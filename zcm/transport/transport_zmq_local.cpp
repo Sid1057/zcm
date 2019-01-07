@@ -44,7 +44,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     unordered_map<zstring_t, void*> pubsocks;
     // socket pair contains the socket + whether it was subscribed to explicitly or not
     unordered_map<zstring_t, pair<void*, zbool_t>> subsocks;
-    zbool_t recvAllChannels = false;
+    zbool_t recvAllChannels = zfalse;
 
     zstring_t recvmsgChannel;
     zsize_t recvmsgBufferSize = START_BUF_SIZE; // Start at 1MB but allow it to grow to MTU
@@ -138,7 +138,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             case INPROC: {
                 zstring_t lockfileName = "inproc://" + subnet + "/" + IPC_NAME_PREFIX + channel;
                 return lockfile_trylock(lockfileName.c_str());
-                return true;
+                return ztrue;
             } break;
         }
         assert(0 && "unreachable");
@@ -215,7 +215,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
         while ((ent=readdir(d)) != nullptr) {
             if (strncmp(ent->d_name, prefix, prefixLen) == 0) {
                 zstring_t channel(ent->d_name + prefixLen);
-                void *sock = subsockFindOrCreate(channel, false);
+                void *sock = subsockFindOrCreate(channel, zfalse);
                 if (sock == nullptr) {
                     ZCM_DEBUG("failed to open subsock in scanForNewChannels(%s)",
                               channel.c_str());
@@ -233,7 +233,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     {
         for (auto& elt : pubsocks) {
             auto& channel = elt.first;
-            void *sock = subsockFindOrCreate(channel, false);
+            void *sock = subsockFindOrCreate(channel, zfalse);
             if (sock == nullptr) {
                 ZCM_DEBUG("failed to open subsock in scanForNewChannels(%s)", channel.c_str());
             }
@@ -300,7 +300,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             return ZCM_EOK;
         } else {
             if (enable) {
-                void *sock = subsockFindOrCreate(channel, true);
+                void *sock = subsockFindOrCreate(channel, ztrue);
                 if (sock == nullptr)
                     return ZCM_ECONNECT;
             } else {
@@ -308,7 +308,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
                 if (it != subsocks.end()) {
                     if (it->second.second) { // This channel has been subscribed to explicitly
                         if (recvAllChannels) {
-                            it->second.second = false;
+                            it->second.second = zfalse;
                         } else {
                             zstring_t address = getAddress(it->first);
                             zint_t rc = zmq_disconnect(it->second.first, address.c_str());

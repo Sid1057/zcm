@@ -11,15 +11,15 @@ struct MsgHeaderShort
   private:
     // NOTE: These are set to private only because they are in network format.
     //       Thus, they are not safe to access directly.
-    zu32 magic;
-    zu32 msg_seqno;
+    zuint32_t magic;
+    zuint32_t msg_seqno;
 
     // Converted data
   public:
-    zu32  getMagic()         { return ntohl(magic); }
-    void setMagic(zu32 v)    { magic = htonl(v); }
-    zu32  getMsgSeqno()      { return ntohl(msg_seqno); }
-    void setMsgSeqno(zu32 v) { msg_seqno = htonl(v); }
+    zuint32_t  getMagic()               { return ntohl(magic); }
+    void       setMagic(zuint32_t v)    { magic = htonl(v); }
+    zuint32_t  getMsgSeqno()            { return ntohl(msg_seqno); }
+    void       setMsgSeqno(zuint32_t v) { msg_seqno = htonl(v); }
 
     // Computed data
   public:
@@ -38,25 +38,25 @@ struct MsgHeaderLong
     // Layout
   // TODO: make this private
   //private:
-    zu32 magic;
-    zu32 msg_seqno;
-    zu32 msg_size;
-    zu32 fragment_offset;
-    zu16 fragment_no;
-    zu16 fragments_in_msg;
+    zuint32_t magic;
+    zuint32_t msg_seqno;
+    zuint32_t msg_size;
+    zuint32_t fragment_offset;
+    zuint16_t fragment_no;
+    zuint16_t fragments_in_msg;
 
     // Converted data
   public:
-    zu32 getMagic()          { return ntohl(magic); }
-    zu32 getMsgSeqno()       { return ntohl(msg_seqno); }
-    zu32 getMsgSize()        { return ntohl(msg_size); }
-    zu32 getFragmentOffset() { return ntohl(fragment_offset); }
-    zu16 getFragmentNo()     { return ntohs(fragment_no); }
-    zu16 getFragmentsInMsg() { return ntohs(fragments_in_msg); }
+    zuint32_t getMagic()          { return ntohl(magic); }
+    zuint32_t getMsgSeqno()       { return ntohl(msg_seqno); }
+    zuint32_t getMsgSize()        { return ntohl(msg_size); }
+    zuint32_t getFragmentOffset() { return ntohl(fragment_offset); }
+    zuint16_t getFragmentNo()     { return ntohs(fragment_no); }
+    zuint16_t getFragmentsInMsg() { return ntohs(fragments_in_msg); }
 
     // Computed data
   public:
-    zu32 getFragmentSize(zsize_t pktsz) { return pktsz - sizeof(*this); }
+    zuint32_t getFragmentSize(zsize_t pktsz) { return pktsz - sizeof(*this); }
     zchar_t *getDataPtr() { return (zchar_t*)(this+1); }
 };
 
@@ -68,7 +68,7 @@ struct MsgHeaderLong
 struct Buffer
 {
     zchar_t *data = nullptr;
-    zsize_t size = 0;
+    zsize_t  size = 0;
 
     Buffer(){}
   private:
@@ -94,13 +94,13 @@ struct Buffer
 
 struct Message
 {
-    zi64               utime;       // timestamp of first datagram receipt
+    zint64_t       utime;       // timestamp of first datagram receipt
 
-    const zchar_t     *channel;     // points into 'buf'
-    zsize_t            channellen;  // length of channel
+    const zchar_t *channel;     // points into 'buf'
+    zsize_t        channellen;  // length of channel
 
-    zchar_t           *data;        // points into 'buf'
-    zsize_t            datalen;     // length of data
+    zchar_t       *data;        // points into 'buf'
+    zsize_t        datalen;     // length of data
 
     // Backing store buffer that contains the actual data
     Buffer buf;
@@ -110,8 +110,8 @@ struct Message
 
 struct Packet
 {
-    zi64             utime;      // timestamp of first datagram receipt
-    zsize_t          sz;         // size received
+    zuint64_t       utime;      // timestamp of first datagram receipt
+    zsize_t         sz;         // size received
 
     struct sockaddr from;       // sender
     socklen_t       fromlen;
@@ -127,19 +127,19 @@ struct Packet
 /******************** fragment buffer **********************/
 struct FragBuf
 {
-    zi64     last_packet_utime;
-    zu32     msg_seqno;
-    zu16     fragments_remaining;
+    zint64_t   last_packet_utime;
+    zuint32_t  msg_seqno;
+    zuint16_t  fragments_remaining;
 
     // The channel starts at the beginning of the buffer. The data
     // follows immediately after the channel and its NULL
-    zsize_t  channellen;
+    zsize_t channellen;
     struct sockaddr_in from;
 
     // Fields set by the allocator object
     Buffer buf;
 
-    bool matchesSockaddr(struct sockaddr_in *addr);
+    zbool_t matchesSockaddr(struct sockaddr_in *addr);
 };
 
 /************** A pool to handle every alloc/dealloc operation on Message objects ******/
@@ -162,7 +162,7 @@ struct MessagePool
     void freeMessage(Message *b);
 
     // FragBuf
-    FragBuf *addFragBuf(zu32 data_size);
+    FragBuf *addFragBuf(zuint32_t data_size);
     FragBuf *lookupFragBuf(struct sockaddr_in *key);
     void removeFragBuf(FragBuf *fbuf);
 

@@ -12,14 +12,14 @@ using namespace std;
 #define HZ 500
 #define MSG_COUNT 100
 
-static bool BIG_MESSAGE = true;
-volatile bool running_recv = true;
-volatile bool running_send = true;
-static void sighandler(int sig) { running_recv = false; }
+static zbool_t BIG_MESSAGE = ztrue;
+volatile zbool_t running_recv = ztrue;
+volatile zbool_t running_send = ztrue;
+static void sighandler(zint_t sig) { running_recv = zfalse; }
 
 static zcm_trans_t *makeTransport()
 {
-    const char *url = getenv("ZCM_DEFAULT_URL");
+    const zchar_t *url = getenv("ZCM_DEFAULT_URL");
     if (!url) {
         fprintf(stderr, "ERR: Unable to find environment variable ZCM_DEFAULT_URL\n");
         return NULL;
@@ -40,8 +40,8 @@ static zcm_msg_t makeMasterMsg()
     msg.channel = "FOO";
     msg.len = BIG_MESSAGE ? 500000 : 1000;
     msg.buf = (zuint8_t*) zcm_malloc(msg.len);
-    for (size_t i = 0; i < msg.len; i++)
-        msg.buf[i] = (char)(i & 0xff);
+    for (zsize_t i = 0; i < msg.len; i++)
+        msg.buf[i] = (zchar_t)(i & 0xff);
 
     return msg;
 }
@@ -62,9 +62,9 @@ static void verifySame(zcm_msg_t *a, zcm_msg_t *b)
         fail("Channels don't match!");
     if (a->len != b->len)
         fail("Lengths don't match!");
-    for (size_t i = 0; i < a->len; i++)
+    for (zsize_t i = 0; i < a->len; i++)
         if (a->buf[i] != b->buf[i])
-            fail("Data doesn't match at index %d", (int)i);
+            fail("Data doesn't match at index %d", (zint_t)i);
 }
 
 static void send()
@@ -76,7 +76,7 @@ static void send()
     usleep(10000); // sleep 10ms so the recv thread can come up
 
     zcm_msg_t msg = makeMasterMsg();
-    for (int i = 0; i < MSG_COUNT && running_send; i++) {
+    for (zsize_t i = 0; i < MSG_COUNT && running_send; i++) {
         zcm_trans_sendmsg(trans, msg);
         usleep(1000000 / HZ);
     }
@@ -89,24 +89,24 @@ static void recv()
         exit(1);
 
     // Tell the transport to give us all of the channels
-    zcm_trans_recvmsg_enable(trans, NULL, true);
+    zcm_trans_recvmsg_enable(trans, NULL, ztrue);
 
     zcm_msg_t master = makeMasterMsg();
-    uint64_t start = TimeUtil::utime();
-    int i;
+    zuint64_t start = TimeUtil::utime();
+    zsize_t i;
     for (i = 0; i < MSG_COUNT && running_recv; i++) {
         zcm_msg_t msg;
-        int ret = zcm_trans_recvmsg(trans, &msg, 100);
+        zcm_retcode_t ret = zcm_trans_recvmsg(trans, &msg, 100);
         if (ret == ZCM_EOK) {
             verifySame(&master, &msg);
         }
     }
-    uint64_t end = TimeUtil::utime();
+    zuint64_t end = TimeUtil::utime();
 
     cout << "Received " << (i * 100 / MSG_COUNT) << "\% of the messages in "
          << ((end - start) / 1e6) << " seconds" <<  endl;
 
-    running_send = false;
+    running_send = zfalse;
 }
 
 int main(int argc, char *argv[])
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     if (argc > 1) {
         string opt {argv[1]};
         if (opt == "--small")
-            BIG_MESSAGE = false;
+            BIG_MESSAGE = zfalse;
     }
 
     signal(SIGINT, sighandler);

@@ -45,7 +45,7 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
 
         // build 'options'
         auto *opts = zcm_url_opts(url);
-        for (zuint32_t i = 0; i < opts->numopts; i++)
+        for (zsize_t i = 0; i < opts->numopts; i++)
             options[opts->name[i]] = opts->value[i];
 
         zstring_t* speedStr = findOption("speed");

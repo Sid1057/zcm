@@ -103,7 +103,7 @@ inline void ZCM::resume()
 #endif
 
 #ifndef ZCM_EMBEDDED
-inline zbool_t ZCM::handle()
+inline zcm_retcode_t ZCM::handle()
 {
     return zcm_handle(zcm);
 }
@@ -116,7 +116,7 @@ inline void ZCM::setQueueSize(zuint32_t sz)
 }
 #endif
 
-inline zbool_t ZCM::handleNonblock()
+inline zcm_retcode_t ZCM::handleNonblock()
 {
     return zcm_handle_nonblock(zcm);
 }
@@ -126,29 +126,29 @@ inline void ZCM::flush()
     return zcm_flush(zcm);
 }
 
-inline zbool_t ZCM::publish(const zstring_t& channel, const zuint8_t* data, zuint32_t len)
+inline zcm_retcode_t ZCM::publish(const zstring_t& channel, const zuint8_t* data, zuint32_t len)
 {
     return publishRaw(channel, data, len);
 }
 
 template <class Msg>
-inline zbool_t ZCM::publish(const zstring_t& channel, const Msg* msg)
+inline zcm_retcode_t ZCM::publish(const zstring_t& channel, const Msg* msg)
 {
     zuint32_t len = msg->getEncodedSize();
     zuint8_t* buf = new zuint8_t[len];
     if (!buf) {
         zcm->err = ZCM_EMEMORY;
-        return zfalse;
+        return zcm->err;
     }
     zint32_t encodeRet = msg->encode(buf, 0, len);
     if (encodeRet < 0 || (zuint32_t) encodeRet != len) {
         delete[] buf;
         zcm->err = ZCM_EAGAIN;
-        return zfalse;
+        return zcm->err;
     }
-    auto ret = publishRaw(channel, buf, len);
+    zcm->err = publishRaw(channel, buf, len);
     delete[] buf;
-    return ret;
+    return zcm->err;
 }
 
 inline Subscription* ZCM::subscribe(const zstring_t& channel,
@@ -422,7 +422,7 @@ inline void ZCM::unsubscribe(Subscription* sub)
 inline zcm_t* ZCM::getUnderlyingZCM()
 { return zcm; }
 
-inline zbool_t ZCM::publishRaw(const zstring_t& channel, const zuint8_t* data, zuint32_t len)
+inline zcm_retcode_t ZCM::publishRaw(const zstring_t& channel, const zuint8_t* data, zuint32_t len)
 { return zcm_publish(zcm, channel.c_str(), data, len); }
 
 inline void ZCM::subscribeRaw(void*& rawSub, const zstring_t& channel,
@@ -504,7 +504,7 @@ inline const LogEvent* LogFile::readEventAtOffset(zoff_t offset)
     return cplusplusIfyEvent(evt);
 }
 
-inline zbool_t LogFile::writeEvent(const LogEvent* event)
+inline zcm_retcode_t LogFile::writeEvent(const LogEvent* event)
 {
     zcm_eventlog_event_t evt;
     evt.eventnum = event->eventnum;

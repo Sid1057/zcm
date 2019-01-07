@@ -6,10 +6,10 @@
 #define CHANNEL "TEST_CHANNEL"
 #define N 10
 
-static volatile size_t numrecv = 0;
-static volatile bool subrunning = false;
+static volatile zsize_t numrecv = 0;
+static volatile zbool_t subrunning = zfalse;
 
-static void handler(const zcm_recv_buf_t *rbuf, const char *channel, void *usr)
+static void handler(const zcm_recv_buf_t *rbuf, const zchar_t *channel, void *usr)
 {
     numrecv++;
 }
@@ -20,7 +20,7 @@ void subfunc()
     zcm_subscribe(zcm, CHANNEL, handler, NULL);
 
     zcm_start(zcm);
-    subrunning = true;
+    subrunning = ztrue;
     while (subrunning) {
         usleep(100000);
     }
@@ -38,8 +38,8 @@ int main()
     while (!subrunning) {}
 
     // do pub
-    char data = 'A';
-    for (size_t i = 0; i < N; i++) {
+    zchar_t data = 'A';
+    for (zsize_t i = 0; i < N; i++) {
         // create, send, and destroy
         zcm_t *zcm = zcm_create("udpm://239.255.76.67:7667?ttl=0");
         assert(zcm);
@@ -50,7 +50,7 @@ int main()
 
 
     // shutdown
-    subrunning = false;
+    subrunning = zfalse;
     subthread.join();
 
     // report

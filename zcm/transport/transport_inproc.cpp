@@ -160,10 +160,10 @@ zcm_trans_methods_t ZCM_TRANS_CLASSNAME::methods = {
 };
 
 static zcm_trans_t *create_blocking(zcm_url_t *url)
-{ return new ZCM_TRANS_CLASSNAME(url, true); }
+{ return new ZCM_TRANS_CLASSNAME(url, ztrue); }
 
 static zcm_trans_t *create_nonblocking(zcm_url_t *url)
-{ return new ZCM_TRANS_CLASSNAME(url, false); }
+{ return new ZCM_TRANS_CLASSNAME(url, zfalse); }
 
 const TransportRegister ZCM_TRANS_CLASSNAME::regBlocking(
     "block-inproc",

@@ -18,7 +18,7 @@ int main(int argc, const char *argv[])
 
     zcm_eventlog_t *l = zcm_eventlog_create("testlog.log", "w");
     assert(l && "Failed to open log for writing");
-    for (size_t i = 0; i < 100; ++i) {
+    for (zsize_t i = 0; i < 100; ++i) {
         assert(ZCM_EOK == zcm_eventlog_write_event(l, &event) && "Unable to write log event to log");
         event.eventnum++;
         event.timestamp++;
@@ -31,7 +31,7 @@ int main(int argc, const char *argv[])
     // Start from end of log and mess up the sync. then ensure everything still works
     fseeko(zcm_eventlog_get_fileptr(l),  -1, SEEK_END);
 
-    for (size_t i = 0; i < 100; ++i) {
+    for (zsize_t i = 0; i < 100; ++i) {
         event.eventnum--;
         event.timestamp--;
         zcm_eventlog_event_t *le = zcm_eventlog_read_prev_event(l);
@@ -39,10 +39,10 @@ int main(int argc, const char *argv[])
         assert(le->eventnum == event.eventnum && "Incorrect eventnum inside of prev event");
         assert(le->timestamp == event.timestamp && "Incorrect timestamp inside of prev event");
         assert(le->channellen == event.channellen && "Incorrect channellen inside of prev event");
-        assert(strncmp((const char*)le->channel, testChannel.c_str(), le->channellen) == 0 &&
+        assert(strncmp((const zchar_t*)le->channel, testChannel.c_str(), le->channellen) == 0 &&
                "Incorrect data inside of prev event");
         assert(le->datalen = event.datalen && "Incorrect channellen inside of prev event");
-        assert(strncmp((const char*)le->data, testData.c_str(), le->datalen) == 0 &&
+        assert(strncmp((const zchar_t*)le->data, testData.c_str(), le->datalen) == 0 &&
                "Incorrect data inside of prev event");
         zcm_eventlog_free_event(le);
     }
@@ -50,16 +50,16 @@ int main(int argc, const char *argv[])
     assert(zcm_eventlog_read_prev_event(l) == NULL &&
            "Requesting event before first event didn't return NULL");
 
-    for (size_t i = 0; i < 100; ++i) {
+    for (zsize_t i = 0; i < 100; ++i) {
         zcm_eventlog_event_t *le = zcm_eventlog_read_next_event(l);
         assert(le && "Failed to read next log event out of log");
         assert(le->eventnum == event.eventnum && "Incorrect eventnum inside of next event");
         assert(le->timestamp == event.timestamp && "Incorrect timestamp inside of next event");
         assert(le->channellen == event.channellen && "Incorrect channellen inside of next event");
-        assert(strncmp((const char*)le->channel, testChannel.c_str(), le->channellen) == 0 &&
+        assert(strncmp((const zchar_t*)le->channel, testChannel.c_str(), le->channellen) == 0 &&
                "Incorrect data inside of next event");
         assert(le->datalen = event.datalen && "Incorrect channellen inside of next event");
-        assert(strncmp((const char*)le->data, testData.c_str(), le->datalen) == 0 &&
+        assert(strncmp((const zchar_t*)le->data, testData.c_str(), le->datalen) == 0 &&
                "Incorrect data inside of next event");
         zcm_eventlog_free_event(le);
         event.eventnum++;
@@ -70,11 +70,11 @@ int main(int argc, const char *argv[])
            "Requesting event after last event didn't return NULL");
 
     fseeko(zcm_eventlog_get_fileptr(l), 0, SEEK_SET);
-    for (size_t i = 0; i < 10; ++i) {
+    for (zsize_t i = 0; i < 10; ++i) {
         zcm_eventlog_event_t *le = zcm_eventlog_read_next_event(l);
         zcm_eventlog_free_event(le);
     }
-    off_t offset = ftello(zcm_eventlog_get_fileptr(l));
+    zoff_t offset = ftello(zcm_eventlog_get_fileptr(l));
     fseeko(zcm_eventlog_get_fileptr(l), 0, SEEK_SET);
 
     zcm_eventlog_event_t *le = zcm_eventlog_read_event_at_offset(l, offset);
@@ -82,16 +82,16 @@ int main(int argc, const char *argv[])
     assert(le->eventnum == 10 && "Incorrect eventnum inside of offset event");
     assert(le->timestamp == 11 && "Incorrect timestamp inside of offset event");
     assert(le->channellen == event.channellen && "Incorrect channellen inside of offset event");
-    assert(strncmp((const char*)le->channel, testChannel.c_str(), le->channellen) == 0 &&
+    assert(strncmp((const zchar_t*)le->channel, testChannel.c_str(), le->channellen) == 0 &&
            "Incorrect data inside of offset event");
     assert(le->datalen = event.datalen && "Incorrect channellen inside of offset event");
-    assert(strncmp((const char*)le->data, testData.c_str(), le->datalen) == 0 &&
+    assert(strncmp((const zchar_t*)le->data, testData.c_str(), le->datalen) == 0 &&
            "Incorrect data inside of offset event");
     zcm_eventlog_free_event(le);
 
     zcm_eventlog_destroy(l);
 
-    int ret = system("rm testlog.log");
+    zint_t ret = system("rm testlog.log");
     (void) ret;
 
     return 0;

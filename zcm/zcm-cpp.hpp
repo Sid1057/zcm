@@ -29,25 +29,24 @@ class ZCM
     virtual inline ~ZCM();
 
     virtual inline zbool_t good() const;
-    // returns zcm_errno()
-    virtual inline zcm_retcode_t err() const;
+    virtual inline zcm_retcode_t  err() const; // returns zcm_errno()
     virtual inline const zchar_t* strerror() const;
     virtual inline const zchar_t* strerrno(zcm_retcode_t err) const;
 
     #ifndef ZCM_EMBEDDED
-    virtual inline    void run();
-    virtual inline    void start();
-    virtual inline    void stop();
-    virtual inline    void pause();
-    virtual inline    void resume();
-    virtual inline zbool_t handle();
-    virtual inline    void setQueueSize(zuint32_t sz);
+    virtual inline          void run();
+    virtual inline          void start();
+    virtual inline          void stop();
+    virtual inline          void pause();
+    virtual inline          void resume();
+    virtual inline zcm_retcode_t handle();
+    virtual inline          void setQueueSize(zuint32_t sz);
     #endif
-    virtual inline zbool_t handleNonblock();
-    virtual inline    void flush();
+    virtual inline zcm_retcode_t handleNonblock();
+    virtual inline          void flush();
 
   public:
-    inline zbool_t publish(const zstring_t& channel, const zuint8_t* data, zuint32_t len);
+    inline zcm_retcode_t publish(const zstring_t& channel, const zuint8_t* data, zuint32_t len);
 
     // Note: if we make a publish binding that takes a const message reference, the compiler does
     //       not select the right version between the pointer and reference versions, so when the
@@ -55,7 +54,7 @@ class ZCM
     //       compile errors (turns the input into a double pointer). We have to choose one or the
     //       other for the api.
     template <class Msg>
-    inline zbool_t publish(const zstring_t& channel, const Msg* msg);
+    inline zcm_retcode_t publish(const zstring_t& channel, const Msg* msg);
 
     inline Subscription* subscribe(const zstring_t& channel,
                                    void (*cb)(const ReceiveBuffer* rbuf,
@@ -97,9 +96,9 @@ class ZCM
 
   protected:
     /**** Methods for inheritor override ****/
-    virtual inline zbool_t publishRaw(const zstring_t& channel,
-                                      const zuint8_t* data,
-                                      zuint32_t len);
+    virtual inline zcm_retcode_t publishRaw(const zstring_t& channel,
+                                            const zuint8_t* data,
+                                            zuint32_t len);
 
     // Set the value of "rawSub" with your underlying subscription. "rawSub" will be passed
     // (by reference) into unsubscribeRaw when zcm->unsubscribe() is called on a cpp subscription
@@ -166,7 +165,7 @@ struct LogFile
     inline const LogEvent* readNextEvent();
     inline const LogEvent* readPrevEvent();
     inline const LogEvent* readEventAtOffset(zoff_t offset);
-    inline zbool_t         writeEvent(const LogEvent* event);
+    inline zcm_retcode_t   writeEvent(const LogEvent* event);
 
   private:
     inline const LogEvent* cplusplusIfyEvent(zcm_eventlog_event_t* le);

@@ -38,20 +38,17 @@ using namespace std;
 
 #define US_TO_MS(a) (a)/1e3
 
-using zu8  = zuint8_t;
-using zu64 = zuint64_t;
-
 struct Serial
 {
     Serial(){}
     ~Serial() { close(); }
 
-    zbool_t open(const string& port, zint32_t baud, zbool_t hwFlowControl);
+    zbool_t open(const zstring_t& port, zint32_t baud, zbool_t hwFlowControl);
     zbool_t isOpen() { return fd > 0; };
     void close();
 
-    zint32_t write(const zu8* buf, zuint32_t sz);
-    zint32_t read(zu8* buf, zuint32_t sz, zu64 timeoutMs);
+    zint32_t write(const zuint8_t* buf, zuint32_t sz);
+    zint32_t read(zuint8_t* buf, zuint32_t sz, zuint64_t timeoutMs);
     // Returns 0 on invalid input baud otherwise returns termios constant baud value
     static zint32_t convertBaud(zint32_t baud);
 
@@ -61,24 +58,24 @@ struct Serial
     Serial& operator=(Serial&&) = delete;
 
   private:
-    string port;
+    zstring_t port;
     zint32_t fd = -1;
 };
 
-zbool_t Serial::open(const string& port_, zint32_t baud, zbool_t hwFlowControl)
+zbool_t Serial::open(const zstring_t& port_, zint32_t baud, zbool_t hwFlowControl)
 {
     if (baud == 0) {
         fprintf(stderr, "Serial baud rate not specified in url. "
                         "Proceeding without setting baud\n");
     } else if (!(baud = convertBaud(baud))) {
         fprintf(stderr, "Unrecognized baudrate. Failed to open serial device.\n ");
-        return false;
+        return zfalse;
     }
 
     if (!lockfile_trylock(port_.c_str())) {
         ZCM_DEBUG("failed to create lock file, refusing to open serial device (%s)",
                   port_.c_str());
-        return false;
+        return zfalse;
     }
     this->port = port_;
 
@@ -124,7 +121,7 @@ zbool_t Serial::open(const string& port_, zint32_t baud, zbool_t hwFlowControl)
 
     tcflush(fd, TCIOFLUSH);
 
-    return true;
+    return ztrue;
 
  fail:
     // Close the port if it was opened
@@ -142,7 +139,7 @@ zbool_t Serial::open(const string& port_, zint32_t baud, zbool_t hwFlowControl)
     if (port != "") lockfile_unlock(port.c_str());
     this->port = "";
 
-    return false;
+    return zfalse;
 }
 
 void Serial::close()
@@ -158,7 +155,7 @@ void Serial::close()
     }
 }
 
-zint32_t Serial::write(const zu8* buf, zuint32_t sz)
+zint32_t Serial::write(const zuint8_t* buf, zuint32_t sz)
 {
     assert(this->isOpen());
     zint32_t ret = ::write(fd, buf, sz);
@@ -169,14 +166,14 @@ zint32_t Serial::write(const zu8* buf, zuint32_t sz)
     return ret;
 }
 
-zint32_t Serial::read(zu8* buf, zuint32_t sz, zu64 timeoutUs)
+zint32_t Serial::read(zuint8_t* buf, zuint32_t sz, zuint64_t timeoutUs)
 {
     assert(this->isOpen());
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
 
-    zu64 tOut = max((zu64)SERIAL_TIMEOUT_US, timeoutUs);
+    zuint64_t tOut = max((zuint64_t)SERIAL_TIMEOUT_US, timeoutUs);
 
     struct timeval timeout;
     timeout.tv_sec = tOut / 1000000;
@@ -191,7 +188,7 @@ zint32_t Serial::read(zu8* buf, zuint32_t sz, zu64 timeoutUs)
             } else if (ret == 0) {
                 ZCM_DEBUG("ERR: serial device unplugged");
                 close();
-                assert(false && "ERR: serial device unplugged\n" &&
+                assert(zfalse && "ERR: serial device unplugged\n" &&
                        "ZCM does not support reconnecting to serial devices");
                 return -3;
             }
@@ -236,19 +233,19 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
     zbool_t hwFlowControl;
 
     zbool_t raw;
-    string rawChan;
+    zstring_t rawChan;
     zuint32_t rawSize;
     std::unique_ptr<zuint8_t[]> rawBuf;
 
-    string address;
+    zstring_t address;
 
-    unordered_map<string, string> options;
+    unordered_map<zstring_t, zstring_t> options;
 
     zcm_trans_t* gst;
 
     zuint64_t timeoutLeft;
 
-    string* findOption(const string& s)
+    zstring_t* findOption(const zstring_t& s)
     {
         auto it = options.find(s);
         if (it == options.end()) return nullptr;
@@ -277,26 +274,26 @@ struct ZCM_TRANS_CLASSNAME : public zcm_trans_t
             }
         }
 
-        hwFlowControl = false;
+        hwFlowControl = zfalse;
         auto* hwFlowControlStr = findOption("hw_flow_control");
         if (hwFlowControlStr) {
             if (*hwFlowControlStr == "true") {
-                hwFlowControl = true;
+                hwFlowControl = ztrue;
             } else if (*hwFlowControlStr == "false") {
-                hwFlowControl = false;
+                hwFlowControl = zfalse;
             } else {
                 ZCM_DEBUG("expected boolean argument for 'hw_flow_control'");
                 return;
             }
         }
 
-        raw = false;
+        raw = zfalse;
         auto* rawStr = findOption("raw");
         if (rawStr) {
             if (*rawStr == "true") {
-                raw = true;
+                raw = ztrue;
             } else if (*rawStr == "false") {
-                raw = false;
+                raw = zfalse;
             } else {
                 ZCM_DEBUG("expected boolean argument for 'raw'");
                 return;

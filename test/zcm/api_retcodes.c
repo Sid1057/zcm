@@ -135,8 +135,8 @@ static void test_publish(void)
 
     // Test channel size limit checking
     {
-        char channel[ZCM_CHANNEL_MAXLEN+2];
-        char data = 'A';
+        zchar_t channel[ZCM_CHANNEL_MAXLEN+2];
+        zchar_t data = 'A';
 
         /* channel size at limit */
         memset(channel, 'A', ZCM_CHANNEL_MAXLEN);
@@ -153,8 +153,8 @@ static void test_publish(void)
 
     // Test data size limit checking
     {
-        const char *channel = "FOO";
-        char *data = malloc(GENERIC_MTU + 1);
+        const zchar_t *channel = "FOO";
+        zchar_t *data = malloc(GENERIC_MTU + 1);
 
         /* data size at limit */
         ENSURE(ZCM_EOK == zcm_publish(&zcm, channel, (zuint8_t*) data, GENERIC_MTU));
@@ -178,9 +178,9 @@ static void test_publish_msgdrop(void)
     zcm_start(&zcm);
 
     // NOTE: We assume that 100000 publish calls are enought to overflow the send buffer
-    const int MAX_PUBS = 100000;
-    for (int i = 0; i < MAX_PUBS; i++) {
-        char data = 'a';
+    const zsize_t MAX_PUBS = 100000;
+    for (zsize_t i = 0; i < MAX_PUBS; i++) {
+        zchar_t data = 'a';
         zcm_retcode_t ret = zcm_publish(&zcm, "CHANNEL", (zuint8_t*) &data, 1);
         if (ret == ZCM_EAGAIN) {
             ENSURE(ZCM_EAGAIN == zcm_errno(&zcm));

@@ -115,7 +115,6 @@ struct EmitHeader : public Emit
     {
         const char* tn_ = zs.structname.nameUnderscoreCStr();
 
-        emit(0, "#include <stdlib.h>");
         emit(0, "#include <zcm/zcm_coretypes.h>");
 
         if(!zcm.gopt->getBool("c-no-pubsub")) {
@@ -265,8 +264,12 @@ struct EmitHeader : public Emit
             emit(0, "");
             emit(0, "/**");
             emit(0, " * Removes and destroys a subscription created by %s_subscribe()", tn_);
+            emit(0, " *");
+            emit(0, " * @param zcm The ZCM instance to unsubscribe from.");
+            emit(0, " * @param sub The subscription to unsubscribe");
+            emit(0, " * @return ZCM_EOK on success, error code on error.");
             emit(0, " */");
-            emit(0,"zcm_retcode_t %s_unsubscribe(zcm_t* zcm, %s_subscription_t* hid);", tn_, tn_);
+            emit(0,"zcm_retcode_t %s_unsubscribe(zcm_t* zcm, %s_subscription_t* sub);", tn_, tn_);
             //emit(0, "");
             //emit(0, "/**");
             //emit(0, " * Sets the queue capacity for a subscription.");
@@ -895,17 +898,17 @@ struct EmitSource : public Emit
         //emit(0, "    return 0;//zcm_subscription_set_queue_capacity (subs->z_sub, num_messages);");
         //emit(0, "}\n");
         emit(0, "");
-        emit(0, "zcm_retcode_t %s_unsubscribe(zcm_t* zcm, %s_subscription_t* hid)", tn_, tn_);
+        emit(0, "zcm_retcode_t %s_unsubscribe(zcm_t* zcm, %s_subscription_t* sub)", tn_, tn_);
         emit(0, "{");
-        emit(0, "    zcm_retcode_t status = zcm_unsubscribe(zcm, hid->z_sub);");
+        emit(0, "    zcm_retcode_t status = zcm_unsubscribe(zcm, sub->z_sub);");
         emit(0, "    if (status != ZCM_EOK) {");
         emit(0, "        #ifndef ZCM_EMBEDDED");
         emit(0, "        fprintf(stderr,");
-        emit(0, "           \"couldn't unsubscribe %s_handler %%p!\\n\", hid);", tn_);
+        emit(0, "           \"couldn't unsubscribe %s_handler %%p!\\n\", sub);", tn_);
         emit(0, "        #endif");
         emit(0, "        return status;");
         emit(0, "    }");
-        emit(0, "    zcm_free (hid);");
+        emit(0, "    zcm_free (sub);");
         emit(0, "    return ZCM_EOK;");
         emit(0, "}\n");
     }

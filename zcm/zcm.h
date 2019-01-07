@@ -105,7 +105,7 @@ zcm_retcode_t zcm_try_unsubscribe(zcm_t* zcm, zcm_sub_t* sub);
 /* Publish a zcm message buffer. Note: the message may not be completely
    sent after this call has returned. To block until the messages are transmitted,
    call the zcm_flush() method.
-   Returns true on success, and false on failure
+   Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure */
 zcm_retcode_t zcm_publish(zcm_t* zcm, const zchar_t* channel, const zuint8_t* data, zuint32_t len);
 
@@ -117,7 +117,7 @@ void zcm_flush(zcm_t* zcm);
 /* Nonblocking version of flush as defined above.
    If you want to guarantee that this function succeeds at some point,
    you should zcm_pause() first.
-   Returns true on success, and false on failure
+   Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure */
 zcm_retcode_t zcm_try_flush(zcm_t* zcm);
 
@@ -126,12 +126,12 @@ zcm_retcode_t zcm_try_flush(zcm_t* zcm);
 void zcm_run(zcm_t* zcm);
 void zcm_start(zcm_t* zcm);
 void zcm_stop(zcm_t* zcm);
-/* Returns true on success, and false on failure
+/* Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure */
 zcm_retcode_t zcm_try_stop(zcm_t* zcm);
 void zcm_pause(zcm_t* zcm); /* pauses message dispatch and publishing, not transport */
 void zcm_resume(zcm_t* zcm);
-/* Returns true on success, and false on failure
+/* Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure */
 zcm_retcode_t zcm_handle(zcm_t* zcm);
 /* Determines how many messages can be stored from the transport without being dispatched
@@ -143,13 +143,13 @@ zcm_retcode_t zcm_handle(zcm_t* zcm);
    messages will not be read from / sent to the transport, which could cause significant
    issues depending on the transport. */
 void zcm_set_queue_size(zcm_t* zcm, zuint32_t numMsgs);
-/* Returns true on success, and false on failure
+/* Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure */
 zcm_retcode_t zcm_try_set_queue_size(zcm_t* zcm, zuint32_t numMsgs);
 #endif
 
 /* Non-Blocking Mode Only: Functions checking and dispatching messages
-   Returns true on success, and false on failure
+   Returns ZCM_EOK on success, error code on failure
    Sets zcm errno on failure
    zcm errno will be ZCM_EAGAIN if no messages, error code otherwise */
 zcm_retcode_t zcm_handle_nonblock(zcm_t* zcm);

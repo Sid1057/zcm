@@ -11,7 +11,7 @@
 #define SLEEPUS 100
 
 static size_t recv_count = 0;
-static void handler(const zcm_recv_buf_t *rbuf, const char *channel, void *usr)
+static void handler(const zcm_recv_buf_t *rbuf, const zchar_t *channel, void *usr)
 {
     recv_count++;
 }

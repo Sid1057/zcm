@@ -1,13 +1,13 @@
 #include "buffers.hpp"
 
-static bool sockaddrEqual(struct sockaddr_in *a, struct sockaddr_in *b)
+static zbool_t sockaddrEqual(struct sockaddr_in *a, struct sockaddr_in *b)
 {
     return a->sin_addr.s_addr == b->sin_addr.s_addr &&
            a->sin_port        == b->sin_port &&
            a->sin_family      == b->sin_family;
 }
 
-bool FragBuf::matchesSockaddr(struct sockaddr_in *addr)
+zbool_t FragBuf::matchesSockaddr(struct sockaddr_in *addr)
 {
     return sockaddrEqual(&from, addr);
 }
@@ -82,19 +82,19 @@ void MessagePool::freeMessage(Message *b)
 }
 
 
-FragBuf *MessagePool::addFragBuf(zu32 data_size)
+FragBuf *MessagePool::addFragBuf(zuint32_t data_size)
 {
     FragBuf *fbuf = new (mempool.alloc<FragBuf>()) FragBuf{};
     fbuf->buf = this->allocBuffer(data_size);
 
     while (totalSize > maxSize || fragbufs.size() > maxBuffers) {
         // find and remove the least recently updated fragment buffer
-        int idx = -1;
+        zint_t idx = -1;
         FragBuf *eldest = nullptr;
         for (zsize_t i = 0; i < fragbufs.size(); i++) {
             FragBuf *f = fragbufs[i];
             if (idx == -1 || f->last_packet_utime < eldest->last_packet_utime) {
-                idx = (int)i;
+                idx = (zint_t)i;
                 eldest = f;
             }
         }

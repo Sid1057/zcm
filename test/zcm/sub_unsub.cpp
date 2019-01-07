@@ -18,26 +18,26 @@ using namespace std;
 } while(0)
 
 #define NUM_DATA 5
-static bool verbose = false;
-static int  retval = 0;
+static zbool_t verbose = zfalse;
+static zint_t  retval = 0;
 
-static char data[NUM_DATA] = {'a', 'b', 'c', 'd', 'e'};
+static zchar_t data[NUM_DATA] = {'a', 'b', 'c', 'd', 'e'};
 
 class Handler
 {
   public:
-    int  num_received = 0;
-    int  bytepacked_received = 0;
+    zsize_t  num_received = 0;
+    zint32_t bytepacked_received = 0;
 
-    void generic_handle(const zcm::ReceiveBuffer *rbuf, const string& channel)
+    void generic_handle(const zcm::ReceiveBuffer *rbuf, const zstring_t& channel)
     {
         vprintf("%" PRIi64 " - %s: ", rbuf->recv_utime, channel.c_str());
-        size_t i;
+        zsize_t i;
         for (i = 0; i < rbuf->data_size; ++i) {
             vprintf("%c ", rbuf->data[i]);
 
             num_received++;
-            size_t j;
+            zsize_t j;
             for (j = 0; j < NUM_DATA; ++j) {
                 if (rbuf->data[i] == data[j]) {
                     bytepacked_received |= 1 << j;
@@ -48,35 +48,35 @@ class Handler
         fflush(stdout);
     }
 
-    int  num_typed_received = 0;
-    int  bytepacked_typed_received = 0;
-    void example_t_handle(const zcm::ReceiveBuffer *rbuf, const string& channel,
+    zsize_t  num_typed_received = 0;
+    zint32_t bytepacked_typed_received = 0;
+    void example_t_handle(const zcm::ReceiveBuffer *rbuf, const zstring_t& channel,
                           const example_t *msg)
     {
         vprintf("%" PRIi64 " - %s: ", rbuf->recv_utime, channel.c_str());
-        vprintf("%d", (int) msg->utime);
-        bytepacked_typed_received |= (int) msg->utime;
+        vprintf("%ld", msg->utime);
+        bytepacked_typed_received |= (zint32_t) msg->utime;
         num_typed_received++;
         vprintf("\n");
-        MyStruct::greet(false, msg);
+        MyStruct::greet(zfalse, msg);
         fflush(stdout);
     }
 };
 
 int main(int argc, const char *argv[])
 {
-    size_t sleep_time = 200000;
+    zsize_t sleep_time = 200000;
 
-    for (int i = 1; i < argc; ++i) {
-        if (string(argv[i]) == "-h") {
+    for (zint_t i = 1; i < argc; ++i) {
+        if (zstring_t(argv[i]) == "-h") {
             cout << "Usage: " << argv[0] << " [-h] [-v] [-s <sleep_us>]\n"
                  << "       -h help\n"
                  << "       -v verbose\n"
                  << "       -s <sleep_us>  sleep time (def = 200000), increase for valgrind\n";
             return 0;
-        } else if (string(argv[i]) == "-v") {
-            verbose = true;
-        } else if (string(argv[i]) == "-s") {
+        } else if (zstring_t(argv[i]) == "-v") {
+            verbose = ztrue;
+        } else if (zstring_t(argv[i]) == "-s") {
             if (++i == argc) {
                 cerr << "option -s requires argument\n";
                 return 1;
@@ -90,8 +90,8 @@ int main(int argc, const char *argv[])
 
     Handler handler;
 
-    string transports[2] = {"ipc", "inproc"};
-    for (size_t i = 0; i < 2; ++i) {
+    zstring_t transports[2] = {"ipc", "inproc"};
+    for (zsize_t i = 0; i < 2; ++i) {
         zcm::ZCM zcm(transports[i]);
         vprintf("Creating zcm %s\n", transports[i].c_str());
         if (!zcm.good()) {
@@ -114,7 +114,7 @@ int main(int argc, const char *argv[])
         vprintf("Starting zcm receive %s\n", transports[i].c_str());
         zcm.start();
 
-        for (size_t j = 0; j < NUM_DATA; ++j) {
+        for (zsize_t j = 0; j < NUM_DATA; ++j) {
             zcm.publish("TEST", (zuint8_t*) data + j, sizeof(zuint8_t));
         }
 
@@ -125,7 +125,7 @@ int main(int argc, const char *argv[])
         vprintf("Unsubscribing zcm %s\n", transports[i].c_str());
         zcm.unsubscribe(sub);
 
-        for (size_t j = 0; j < NUM_DATA; ++j) {
+        for (zsize_t j = 0; j < NUM_DATA; ++j) {
             if (!(handler.bytepacked_received & 1 << j)) {
                 cerr << transports[i] << ": Missed a message: " << data[j] << endl;
                 ++retval;
@@ -167,7 +167,7 @@ int main(int argc, const char *argv[])
         vprintf("Starting zcm receive %s\n", transports[i].c_str());
         zcm.start();
 
-        for (size_t j = 0; j < NUM_DATA; ++j) {
+        for (zsize_t j = 0; j < NUM_DATA; ++j) {
             ex_data.utime = 1 << j;
             zcm.publish("EXAMPLE", &ex_data);
         }
@@ -179,7 +179,7 @@ int main(int argc, const char *argv[])
         vprintf("Unsubscribing zcm %s\n", transports[i].c_str());
         zcm.unsubscribe(ex_sub);
 
-        for (size_t j = 0; j < NUM_DATA; ++j) {
+        for (zsize_t j = 0; j < NUM_DATA; ++j) {
             if (!(handler.bytepacked_received & 1 << j)) {
                 ++retval;
             }
@@ -187,7 +187,7 @@ int main(int argc, const char *argv[])
         if (handler.num_received != NUM_DATA && handler.num_received != NUM_DATA+1) {
             ++retval;
         }
-        for (size_t j = 0; j < NUM_DATA; ++j) {
+        for (zsize_t j = 0; j < NUM_DATA; ++j) {
             if (!(handler.bytepacked_typed_received & 1 << j)) {
                 cerr << transports[i] << ": Missed a message: " << (1 << j) << endl;
                 ++retval;

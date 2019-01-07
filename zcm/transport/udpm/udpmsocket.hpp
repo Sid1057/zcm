@@ -5,7 +5,7 @@
 class UDPMAddress
 {
   public:
-    UDPMAddress(const zstring_t& ip, zu16 port)
+    UDPMAddress(const zstring_t& ip, zuint16_t port)
     {
         this->ip = ip;
         this->port = port;
@@ -17,13 +17,13 @@ class UDPMAddress
     }
 
     const zstring_t& getIP() const { return ip; }
-    zu16 getPort() const { return port; }
+    zuint16_t getPort() const { return port; }
     struct sockaddr* getAddrPtr() const { return (struct sockaddr*)&addr; }
     zsize_t getAddrSize() const { return sizeof(addr); }
 
   private:
     zstring_t ip;
-    zu16 port;
+    zuint16_t port;
     struct sockaddr_in addr;
 };
 
@@ -37,13 +37,13 @@ class UDPMSocket
 
     zbool_t init();
     zbool_t joinMulticastGroup(struct in_addr multiaddr);
-    zbool_t setTTL(zu8 ttl);
-    zbool_t bindPort(zu16 port);
+    zbool_t setTTL(zuint8_t ttl);
+    zbool_t bindPort(zuint16_t port);
     zbool_t setReuseAddr();
     zbool_t setReusePort();
     zbool_t enablePacketTimestamp();
     zbool_t enableLoopback();
-    zbool_t setDestination(const zstring_t& ip, zu16 port);
+    zbool_t setDestination(const zstring_t& ip, zuint16_t port);
 
     zsize_t getRecvBufSize();
     zsize_t getSendBufSize();
@@ -58,11 +58,11 @@ class UDPMSocket
     zssize_t sendBuffers(const UDPMAddress& dest, const zchar_t *a, zsize_t alen,
                          const zchar_t *b, zsize_t blen, const zchar_t *c, zsize_t clen);
 
-    static zbool_t checkConnection(const zstring_t& ip, zu16 port);
+    static zbool_t checkConnection(const zstring_t& ip, zuint16_t port);
     void checkAndWarnAboutSmallBuffer(zsize_t datalen, zsize_t kbufsize);
 
-    static UDPMSocket createSendSocket(struct in_addr multiaddr, zu8 ttl);
-    static UDPMSocket createRecvSocket(struct in_addr multiaddr, zu16 port);
+    static UDPMSocket createSendSocket(struct in_addr multiaddr, zuint8_t ttl);
+    static UDPMSocket createRecvSocket(struct in_addr multiaddr, zuint16_t port);
 
   private:
     SOCKET fd = -1;

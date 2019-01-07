@@ -21,7 +21,7 @@ MemPool::~MemPool()
     }
 }
 
-static bool fitsInU32(zsize_t v)
+static zbool_t fitsInU32(zsize_t v)
 {
     return (v & 0xffffffff) == v;
 }
@@ -31,7 +31,7 @@ static zint_t computeSlot(zsize_t v)
     // Note: Only works on 32-bit and 64-bit systems
     assert(sizeof(zuint_t) == 4 && CHAR_BIT == 8);
     assert(fitsInU32(v));
-    zsize_t bits = 31 - __builtin_clz((zu32)v);
+    zsize_t bits = 31 - __builtin_clz((zuint32_t)v);
     if ((zsize_t)(1<<bits) != v)
         bits += 1;
     assert((zsize_t)(1<<(bits-1)) < v && v <= (zsize_t)(1<<bits));
@@ -44,7 +44,7 @@ static zsize_t slotToSize(zint_t slot)
     return 1 << (slot+16);
 }
 
-char *MemPool::alloc(zsize_t sz)
+zchar_t *MemPool::alloc(zsize_t sz)
 {
     // This allocator only goes up to 2^28
     assert(sz <= (1<<28));
@@ -55,13 +55,13 @@ char *MemPool::alloc(zsize_t sz)
     Block *mem = sizelists[slot];
     if (mem) {
         sizelists[slot] = mem->next;
-        return (char*)mem;
+        return (zchar_t*)mem;
     } else {
-        return (char*)malloc(slotToSize(slot));
+        return (zchar_t*)malloc(slotToSize(slot));
     }
 }
 
-void MemPool::free(char *mem, zsize_t sz)
+void MemPool::free(zchar_t *mem, zsize_t sz)
 {
     // This allocator only goes up to 2^28
     assert(sz <= (1<<28));
@@ -78,16 +78,16 @@ void MemPool::test()
 {
     MemPool pool;
 
-    char *buf = pool.alloc(70000);
+    zchar_t *buf = pool.alloc(70000);
     assert(buf);
     pool.free(buf, 70000);
-    char *buf2 = pool.alloc(1<<17);
+    zchar_t *buf2 = pool.alloc(1<<17);
     assert(buf == buf2);
     pool.free(buf2, 1<<17);
-    char *buf3 =pool.alloc(1<<18);
+    zchar_t *buf3 =pool.alloc(1<<18);
     assert(buf3 && buf3 != buf);
     pool.free(buf3, 1<<18);
-    char *buf4 = pool.alloc(1<<28);
+    zchar_t *buf4 = pool.alloc(1<<28);
     assert(buf4);
     pool.free(buf4, 1<<28);
 }

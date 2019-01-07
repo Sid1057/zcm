@@ -14,22 +14,22 @@
 } while(0)
 
 #define NUM_DATA 5
-static int  verbose = 0;
-static int  retval = 0;
+static zbool_t verbose = zfalse;
+static zint_t  retval = 0;
 
-static int  num_received = 0;
-static int  bytepacked_received = 0;
-static char data[NUM_DATA] = {'a', 'b', 'c', 'd', 'e'};
+static zsize_t  num_received = 0;
+static zint32_t bytepacked_received = 0;
+static zchar_t  data[NUM_DATA] = {'a', 'b', 'c', 'd', 'e'};
 
-static void generic_handler(const zcm_recv_buf_t *rbuf, const char *channel, void *usr)
+static void generic_handler(const zcm_recv_buf_t *rbuf, const zchar_t *channel, void *usr)
 {
     vprintf("%" PRIi64 " - %s: ", rbuf->recv_utime, channel);
-    size_t i;
+    zsize_t i;
     for (i = 0; i < rbuf->data_size; ++i) {
         vprintf("%c ", rbuf->data[i]);
 
         num_received++;
-        size_t j;
+        zsize_t j;
         for (j = 0; j < NUM_DATA; ++j) {
             if (rbuf->data[i] == (zuint8_t) data[j]) {
                 bytepacked_received |= 1 << j;
@@ -40,13 +40,13 @@ static void generic_handler(const zcm_recv_buf_t *rbuf, const char *channel, voi
     fflush(stdout);
 }
 
-static int  num_typed_received = 0;
-static int  bytepacked_typed_received = 0;
-static void example_t_handler(const zcm_recv_buf_t *rbuf, const char *channel,
+static zsize_t  num_typed_received = 0;
+static zint32_t bytepacked_typed_received = 0;
+static void example_t_handler(const zcm_recv_buf_t *rbuf, const zchar_t *channel,
                               const example_t *msg, void *userdata)
 {
     vprintf("%" PRIi64 " - %s: ", rbuf->recv_utime, channel);
-    vprintf("%d", (int) msg->utime);
+    vprintf("%ld", msg->utime);
     bytepacked_typed_received |= (int) msg->utime;
     num_typed_received++;
     vprintf("\n");
@@ -55,9 +55,9 @@ static void example_t_handler(const zcm_recv_buf_t *rbuf, const char *channel,
 
 int main(int argc, const char *argv[])
 {
-    size_t sleep_time = 200000;
+    zsize_t sleep_time = 200000;
 
-    size_t i;
+    zsize_t i;
     for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-h") == 0) {
             printf("Usage: %s [-h] [-v] [-s <sleep us>]\n", argv[0]);
@@ -66,7 +66,7 @@ int main(int argc, const char *argv[])
             printf("       -s <sleep_us>  sleep time (def = 200000), increase for valgrind\n");
             return 0;
         } else if (strcmp(argv[i], "-v") == 0) {
-            verbose = 1;
+            verbose = ztrue;
         } else if (strcmp(argv[i], "-s") == 0) {
             if (++i == argc) {
                 fprintf(stderr, "option -s requires argument\n");
@@ -77,7 +77,7 @@ int main(int argc, const char *argv[])
         }
     }
 
-    const char* transports[2] = {"ipc", "inproc"};
+    const zchar_t* transports[2] = {"ipc", "inproc"};
     for (i = 0; i < 2; ++i) {
         zcm_t *zcm = zcm_create(transports[i]);
         vprintf("Creating zcm %s\n", transports[i]);
@@ -100,7 +100,7 @@ int main(int argc, const char *argv[])
         vprintf("Starting zcm receive %s\n", transports[i]);
         zcm_start(zcm);
 
-        size_t j;
+        zsize_t j;
         for (j = 0; j < NUM_DATA; ++j) {
             zcm_publish(zcm, "TEST", (zuint8_t*) data + j, sizeof(zuint8_t));
         }
@@ -119,8 +119,8 @@ int main(int argc, const char *argv[])
                 ++retval;
             }
         }
-        if (num_received != NUM_DATA && num_received != NUM_DATA+1) {
-            fprintf(stderr, "%s: Received an unexpected number of messages: %d\n",
+        if (num_received != NUM_DATA && num_received != NUM_DATA + 1) {
+            fprintf(stderr, "%s: Received an unexpected number of messages: %zu\n",
                     transports[i], num_received);
             fflush(stderr);
             ++retval;
@@ -137,7 +137,7 @@ int main(int argc, const char *argv[])
                .orientation = { 1, 0, 0, 0 },
         };
         ex_data.num_ranges = 100;
-        ex_data.ranges = calloc(ex_data.num_ranges, sizeof(int16_t));
+        ex_data.ranges = calloc(ex_data.num_ranges, sizeof(zint16_t));
         ex_data.name = "example string";
         ex_data.enabled = 1;
 
@@ -173,8 +173,8 @@ int main(int argc, const char *argv[])
                 ++retval;
             }
         }
-        if (num_typed_received != NUM_DATA && num_typed_received != NUM_DATA+1) {
-            fprintf(stderr, "%s: Received an unexpected number of messages: %d\n",
+        if (num_typed_received != NUM_DATA && num_typed_received != NUM_DATA + 1) {
+            fprintf(stderr, "%s: Received an unexpected number of messages: %zu\n",
                     transports[i], num_typed_received);
             fflush(stderr);
             ++retval;

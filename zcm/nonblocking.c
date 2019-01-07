@@ -16,13 +16,13 @@ struct zcm_nonblocking
     /* TODO speed this up */
     zcm_sub_t subs[ZCM_NONBLOCK_SUBS_MAX];
     zbool_t   subInUse[ZCM_NONBLOCK_SUBS_MAX];
-    zint32_t  subInUseEnd;
+    zsize_t  subInUseEnd;
 };
 
-static zbool_t isRegexChannel(const zchar_t* c, zint32_t clen)
+static zbool_t isRegexChannel(const zchar_t* c, zsize_t clen)
 {
     /* These chars are considered regex */
-    zint32_t i;
+    zsize_t i;
     for (i = 0; i < clen; ++i)
         if (c[i] == '(' || c[i] == ')' || c[i] == '|' ||
             c[i] == '.' || c[i] == '*' || c[i] == '+') return ztrue;
@@ -30,7 +30,7 @@ static zbool_t isRegexChannel(const zchar_t* c, zint32_t clen)
     return zfalse;
 }
 
-static zbool_t isSupportedRegex(const zchar_t* c, zint32_t clen)
+static zbool_t isSupportedRegex(const zchar_t* c, zsize_t clen)
 {
     /* Currently only support strings formed as such: */
     /* "[any non-regex character any number of times].*" */
@@ -40,7 +40,7 @@ static zbool_t isSupportedRegex(const zchar_t* c, zint32_t clen)
     if (c[clen - 1] != '*') return zfalse;
     if (c[clen - 2] != '.') return zfalse;
 
-    zint32_t i;
+    zsize_t i;
     for (i = 0; i < clen - 2; ++i)
         if (!((c[i] >= 'a' && c[i] <= 'z') ||
               (c[i] >= 'A' && c[i] <= 'Z') ||
@@ -60,7 +60,7 @@ zcm_nonblocking_t* zcm_nonblocking_create(zcm_t* z, zcm_trans_t* zt)
     zcm->zt = zt;
     zcm->allChannelsEnabled = zfalse;
 
-    zint32_t i;
+    zsize_t i;
     for (i = 0; i < ZCM_NONBLOCK_SUBS_MAX; ++i)
         zcm->subInUse[i] = zfalse;
 
@@ -91,9 +91,9 @@ zcm_sub_t* zcm_nonblocking_subscribe(zcm_nonblocking_t* zcm, const zchar_t* chan
                                      zcm_msg_handler_t cb, void* usr)
 {
     zcm_retcode_t rc;
-    zint32_t i;
+    zsize_t i;
 
-    zint32_t clen = strlen(channel);
+    zsize_t clen = strlen(channel);
     zbool_t regex = isRegexChannel(channel, clen);
     if (regex) {
         if (!isSupportedRegex(channel, clen)) return NULL;
@@ -129,9 +129,9 @@ zcm_sub_t* zcm_nonblocking_subscribe(zcm_nonblocking_t* zcm, const zchar_t* chan
 zcm_retcode_t zcm_nonblocking_unsubscribe(zcm_nonblocking_t* zcm, zcm_sub_t* sub)
 {
     /* RRR (Bendes) This doesn't support regex */
-    zint32_t i;
+    zsize_t i;
     zint32_t match_idx = sub - zcm->subs;
-    zint32_t num_chan_matches = 0;
+    zsize_t num_chan_matches = 0;
     zcm_retcode_t rc = ZCM_EOK;
 
     if (match_idx < 0 || match_idx >= zcm->subInUseEnd) return ZCM_EINVALID;
@@ -163,7 +163,7 @@ static void dispatch_message(zcm_nonblocking_t* zcm, zcm_msg_t* msg)
     zcm_recv_buf_t rbuf;
     zcm_sub_t* sub;
 
-    zint32_t i;
+    zsize_t i;
     for (i = 0; i < zcm->subInUseEnd; ++i) {
         if (!zcm->subInUse[i]) continue;
 

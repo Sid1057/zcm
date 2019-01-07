@@ -75,7 +75,7 @@ struct Msg
     Msg& operator=(Msg&& other) = delete;
 };
 
-static zbool_t isRegexChannel(const string& channel)
+static zbool_t isRegexChannel(const zstring_t& channel)
 {
     // These chars are considered regex
     auto isRegexChar = [](zchar_t c) {
@@ -107,8 +107,8 @@ struct zcm_blocking
     void pause();
     void resume();
 
-    zcm_retcode_t publish(const string& channel, const zuint8_t* data, zuint32_t len);
-    zcm_sub_t* subscribe(const string& channel, zcm_msg_handler_t cb, void* usr, zbool_t block);
+    zcm_retcode_t publish(const zstring_t& channel, const zuint8_t* data, zuint32_t len);
+    zcm_sub_t* subscribe(const zstring_t& channel, zcm_msg_handler_t cb, void* usr, zbool_t block);
     zcm_retcode_t unsubscribe(zcm_sub_t* sub, zbool_t block);
     zcm_retcode_t flush(zbool_t block);
 
@@ -132,7 +132,7 @@ struct zcm_blocking
 
     zcm_t* z;
     zcm_trans_t* zt;
-    unordered_map<string, SubList> subs;
+    unordered_map<zstring_t, SubList> subs;
     SubList subRegex;
     zuint32_t mtu;
 
@@ -388,7 +388,7 @@ void zcm_blocking_t::resume()
 // Note: We use a lock on publish() to make sure it can be
 // called concurrently. Without the lock, there is a potential
 // race to block on sendQueue.push()
-zcm_retcode_t zcm_blocking_t::publish(const string& channel, const zuint8_t* data, zuint32_t len)
+zcm_retcode_t zcm_blocking_t::publish(const zstring_t& channel, const zuint8_t* data, zuint32_t len)
 {
     // Check the validity of the request
     if (len > mtu) return ZCM_EINVALID;
@@ -412,7 +412,7 @@ zcm_retcode_t zcm_blocking_t::publish(const string& channel, const zuint8_t* dat
 // Note: We use a lock on subscribe() to make sure it can be
 // called concurrently. Without the lock, there is a race
 // on modifying and reading the 'subs' and 'subRegex' containers
-zcm_sub_t* zcm_blocking_t::subscribe(const string& channel,
+zcm_sub_t* zcm_blocking_t::subscribe(const zstring_t& channel,
                                      zcm_msg_handler_t cb, void* usr,
                                      zbool_t block)
 {
